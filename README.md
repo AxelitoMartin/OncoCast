@@ -19,3 +19,28 @@ We recommend first time users to go through the tutorial which can be found usin
 browseVignettes("OncoCast")
 ```
 Once the package has been installed. This will open your default web browser, select HTML and the tutorial will appear.
+
+If you have the following error:
+
+```{r}
+Error: Failed to install 'OncoCast' from GitHub:
+ System command error, exit status: 1, stdout + stderr (last 10 lines):
+E> task 1 failed - "could not find function "Surv""
+E> --- failed re-building 'OncoCast_vignette.Rmd'
+E>
+E> Warning in file.remove(f) :
+E>   cannot remove file '_OncoCast_log.txt', reason 'Permission denied'
+E> SUMMARY: processing the following file failed:
+E>   'OncoCast_vignette.Rmd'
+E>
+E> Error: Vignette re-building failed.
+E> Execution halted
+```
+
+Please first install the package and then re-install it while building the vignette:
+
+```{r}
+devtools::install_github("AxelitoMartin/OncoCast")
+devtools::install_github("AxelitoMartin/OncoCast",build_vignettes = T, build_manual=T,force = T)
+browseVignettes("OncoCast")
+```
