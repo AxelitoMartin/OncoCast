@@ -1,0 +1,58 @@
+Package: OncoCast
+Type: Package
+Title: Ensemble learning survival prediction with improved interface.
+Version: 0.1.0
+Author: Axel Martin
+Maintainer: Axel Martin <martina9@mskcc.org>
+Description: OncoCast is an ensemble learner relying on cross-validation for high dimensional survival data. The algorithm can handle left truncated (delayed entry) data for all available methods. Multiple regression methods can be used including LASSO, elastic-net or generalized boosted regression.
+    Originally developed to stratify cancer patients based on their genomic profile. Through cross-validation we generate an average predictive risk score that acts as a surrogate for the aggregated effects of the profile of each patients. We include an interactive R based application that enables the user to explore the results in various ways. More details can be found in the vignette included in the package.
+License: 
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+Imports:
+	survival,
+	penalized,
+	gbm,
+	foreach,
+	doParallel,
+	stats,
+	ggplot2,
+	plotly,
+	stats,
+	reshape2,
+	scales,
+	pheatmap,
+	survminer,
+	shiny,
+	shinydashboard,
+	R.utils,
+	rmarkdown,
+	knitr,
+	randomForest,
+	e1071,
+	CPE
+Depends:
+	survival,
+	penalized,
+	gbm,
+	foreach,
+	doParallel,
+	stats,
+	ggplot2,
+	plotly,
+	stats,
+	reshape2,
+	scales,
+	pheatmap,
+	survminer,
+	shiny,
+	shinydashboard,
+	R.utils,
+	rmarkdown,
+	knitr,
+	randomForest,
+	e1071,
+	CPE
