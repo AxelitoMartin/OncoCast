@@ -390,10 +390,10 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
   if(!LT) limit <- as.numeric(quantile(data$time,plotQuant))
 
   if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = "hv",
-                           data = data,xlim=c(0,limit),break.time.by = 6) + xlab("Time (Months)") +
+                           data = data,xlim=c(0,limit),break.time.by = 6,risk.table = T) + xlab("Time (Months)") +
     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
   if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = "hv",
-                           data = data,xlim=c(0,limit),break.time.by = 6) + xlab("Time (Months)") +
+                           data = data,xlim=c(0,limit),break.time.by = 6,risk.table = T) + xlab("Time (Months)") +
     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
 
 
