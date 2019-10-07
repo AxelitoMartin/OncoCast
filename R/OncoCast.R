@@ -430,8 +430,13 @@ OncoCast <- function(data,formula, method = c("ENET"),
       }
       train$y <- residuals(fit,type="martingale")
 
-      rf <- try(randomForest(y~.,data = train,mtry = round(ncol(train)/3,digits = 0),
-                             importance=T,ntree = nTree,nodesize = rf.node,replace = F),silent=T)
+      # rf <- try(randomForest(y~.,data = train,mtry = round(ncol(train)/3,digits = 0),
+      #                        importance=T,ntree = nTree,nodesize = rf.node,replace = F),silent=T)
+
+      rf <- tuneRF(train[,-match("y",colnames(train))], train$y,
+                     plot = F,replace = F,trace =F,importance = T,
+                     ntreeTry=nTree, stepFactor=1, improve=0.01,doBest=TRUE,nodesize = rf.node)
+
 
       if(typeof(rf) != "character"){
         final.rf$method <- "RF"
