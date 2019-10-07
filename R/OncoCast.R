@@ -73,7 +73,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      nonPenCol = NULL,
                      nTree=500,interactions=c(1,2),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
-                     out.ties=F,cv.folds=5){
+                     out.ties=F,cv.folds=5,rf.node){
 
 
   # Missingness
@@ -431,7 +431,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
       train$y <- residuals(fit,type="martingale")
 
       rf <- try(randomForest(y~.,data = train,mtry = round(ncol(train)/3,digits = 0),
-                             importance=T,ntree = nTree,nodesize = 5),silent=T)
+                             importance=T,ntree = nTree,nodesize = rf.node,replace = F),silent=T)
 
       if(typeof(rf) != "character"){
         final.rf$method <- "RF"
