@@ -73,7 +73,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      nonPenCol = NULL,
                      nTree=500,interactions=c(1,2),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
-                     out.ties=F,cv.folds=5,rf.node){
+                     out.ties=F,cv.folds=5,rf.node=5){
 
 
   # Missingness
