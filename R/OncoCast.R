@@ -74,7 +74,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      nTree=500,interactions=c(1,2),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
                      out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),replace = F,
-                     sample.fraction=0.632){
+                     sample.fraction=0.632,max.depth = NULL){
 
   # Missingness
   if(anyNA(data)){
@@ -432,7 +432,8 @@ OncoCast <- function(data,formula, method = c("ENET"),
       rfGrid <- expand.grid(.mtry = mtry,
                             .n.trees = nTree,
                             .n.minobsinnode = min.node,
-                            .sample.fraction = sample.fraction)
+                            .sample.fraction = sample.fraction,
+                            .max.depth = max.depth)
 
       BestPerf <- apply(rfGrid,1,function(x){
         set.seed(21071993)
