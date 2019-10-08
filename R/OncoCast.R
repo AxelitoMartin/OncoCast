@@ -429,21 +429,28 @@ OncoCast <- function(data,formula, method = c("ENET"),
       train$y <- residuals(fit,type="martingale")
 
 
-      rfGrid <- expand.grid(.mtry = mtry,
-                            .n.trees = nTree,
-                            .n.minobsinnode = min.node,
-                            .sample.fraction = sample.fraction,
-                            .max.depth = max.depth)
+      if(!is.null(max.depth)) rfGrid <- expand.grid(.mtry = mtry,
+                                                    .n.trees = nTree,
+                                                    .n.minobsinnode = min.node,
+                                                    .sample.fraction = sample.fraction,
+                                                    .max.depth = max.depth)
+      else rfGrid <- expand.grid(.mtry = mtry,
+                                 .n.trees = nTree,
+                                 .n.minobsinnode = min.node,
+                                 .sample.fraction = sample.fraction)
 
       BestPerf <- apply(rfGrid,1,function(x){
         set.seed(21071993)
 
-        rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = replace,
+        if(!is.null(max.depth)) rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = replace,
                      importance = "impurity",mtry = x[1],
                      min.node.size = x[3],
                      sample.fraction = x[4],
                      max.depth = x[5])
-
+        else rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = replace,
+                          importance = "impurity",mtry = x[1],
+                          min.node.size = x[3],
+                          sample.fraction = x[4])
 
         if(is.character(rf)){
           return(list("CPE"=0,"CI"=0,"infl"=NA,"predicted"=NA,
