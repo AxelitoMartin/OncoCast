@@ -428,7 +428,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
       train$y <- residuals(fit,type="martingale")
 
       rf <- ranger(formula = y~., data = train, num.trees = nTree,
-                   importance = "impurity",mtry = floor(ncol(train)/3))
+                   importance = "impurity",mtry = ncol(train)-1,min.node.size = rf.node) #floor(ncol(train)/3)
 
       if(typeof(rf) != "character"){
         final.rf$method <- "RF"
