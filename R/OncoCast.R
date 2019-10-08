@@ -73,7 +73,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      nonPenCol = NULL,
                      nTree=500,interactions=c(1,2),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
-                     out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),tune.rf = F,
+                     out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),replace = F,
                      sample.fraction=0.632){
 
   # Missingness
@@ -437,7 +437,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
       BestPerf <- apply(rfGrid,1,function(x){
         set.seed(21071993)
 
-        rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = F,
+        rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = replace,
                      importance = "impurity",mtry = x[1],
                      min.node.size = x[3],
                      sample.fraction = x[4])
