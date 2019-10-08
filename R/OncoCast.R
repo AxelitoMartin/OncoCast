@@ -73,7 +73,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      nonPenCol = NULL,
                      nTree=500,interactions=c(1,2),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
-                     out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3)){
+                     out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),tune.rf = F){
 
   # Missingness
   if(anyNA(data)){
@@ -427,16 +427,29 @@ OncoCast <- function(data,formula, method = c("ENET"),
       }
       train$y <- residuals(fit,type="martingale")
 
-      train.task = makeRegrTask(data = train, target = "y")
-      # Tuning
-      res = tuneRanger(train.task, num.trees = 1000,  #measure = list(mse),
-                       num.threads = 1, iters = 70, save.file.path = NULL,show.info = F)
+      if(tune.rf == T){
+        train.task = makeRegrTask(data = train, target = "y")
+        # Tuning
+        res = tuneRanger(train.task, num.trees = nTree,  #measure = list(mse),
+                         parameters = list(replace = FALSE, respect.unordered.factors = "order"),
+                         num.threads = 1, iters = 50, save.file.path = NULL,show.info = F,
+                         build.final.model = F)
 
-      rf <- ranger(formula = y~., data = train, num.trees = nTree,replace = F,
-                   importance = "impurity",mtry = as.numeric(res$recommended.pars["mtry"]),
-                   min.node.size = as.numeric(res$recommended.pars["min.node.size"]),
-                   sample.fraction = as.numeric(res$recommended.pars["sample.fraction"])) #floor(ncol(train)/3)
+        if(!is.null(res$recommended.pars[1])) mtry <- as.numeric(res$recommended.pars[1])
+        if(!is.null(res$recommended.pars[2])) rf.node <- as.numeric(res$recommended.pars[2])
+        if(!is.null(res$recommended.pars[3])) sample.fraction <- as.numeric(res$recommended.pars[3])
+        else sample.fraction <- 2/3
 
+        rf <- ranger(formula = y~., data = train, num.trees = nTree,replace = F,
+                     importance = "impurity",mtry = mtry,
+                     min.node.size = rf.node,
+                     sample.fraction = sample.fraction) #floor(ncol(train)/3)
+      }
+      else{
+        rf <- ranger(formula = y~., data = train, num.trees = nTree,replace = F,
+                     importance = "impurity",mtry = mtry,
+                     min.node.size = rf.node)
+      }
       if(typeof(rf) != "character"){
         final.rf$method <- "RF"
         final.rf$Vars <- importance(rf)
@@ -446,7 +459,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
         predicted[match(rownames(test),names(predicted))] <- predict(rf,test)$predictions
         final.rf$CPE <-  as.numeric(phcpe(coxph(testSurv ~predict(rf,test)$predictions),out.ties=out.ties))
         final.rf$CI <- as.numeric(concordance(coxph(testSurv ~predict(rf,test)$predictions,
-                                           test))$concordance)
+                                                    test))$concordance)
         #as.numeric(mean((predict(rf,test)-test$y)^2))
         final.rf$predicted <- predicted
         final.rf$formula <- formula
