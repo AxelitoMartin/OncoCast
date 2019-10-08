@@ -73,7 +73,8 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      nonPenCol = NULL,
                      nTree=500,interactions=c(1,2),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
-                     out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),tune.rf = F){
+                     out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),tune.rf = F,
+                     sample.fraction=0.632){
 
   # Missingness
   if(anyNA(data)){
@@ -427,51 +428,103 @@ OncoCast <- function(data,formula, method = c("ENET"),
       }
       train$y <- residuals(fit,type="martingale")
 
-      if(tune.rf == T){
-        train.task = makeRegrTask(data = train, target = "y")
-        # Tuning
-        res = tuneRanger(train.task, num.trees = nTree,  #measure = list(mse),
-                         parameters = list(replace = FALSE, respect.unordered.factors = "order"),
-                         num.threads = 1, iters = 50, save.file.path = NULL,show.info = F,
-                         build.final.model = F)
 
-        if(!is.null(res$recommended.pars[1])) mtry <- as.numeric(res$recommended.pars[1])
-        if(!is.null(res$recommended.pars[2])) rf.node <- as.numeric(res$recommended.pars[2])
-        if(!is.null(res$recommended.pars[3])) sample.fraction <- as.numeric(res$recommended.pars[3])
-        else sample.fraction <- 2/3
+      rfGrid <- expand.grid(.mtry = mtry,
+                            .n.trees = nTree,
+                            .n.minobsinnode = min.node,
+                            .sample.fraction = sample.fraction)
 
-        rf <- ranger(formula = y~., data = train, num.trees = nTree,replace = F,
-                     importance = "impurity",mtry = mtry,
-                     min.node.size = rf.node,
-                     sample.fraction = sample.fraction) #floor(ncol(train)/3)
-      }
-      else{
-        rf <- ranger(formula = y~., data = train, num.trees = nTree,replace = F,
-                     importance = "impurity",mtry = mtry,
-                     min.node.size = rf.node)
-      }
-      if(typeof(rf) != "character"){
-        final.rf$method <- "RF"
-        final.rf$Vars <- importance(rf)
+      BestPerf <- apply(rfGrid,1,function(x){
+        set.seed(21071993)
 
-        predicted <- rep(NA,nrow(data))
-        names(predicted) <- rownames(data)
-        predicted[match(rownames(test),names(predicted))] <- predict(rf,test)$predictions
-        final.rf$CPE <-  as.numeric(phcpe(coxph(testSurv ~predict(rf,test)$predictions),out.ties=out.ties))
-        final.rf$CI <- as.numeric(concordance(coxph(testSurv ~predict(rf,test)$predictions,
-                                                    test))$concordance)
-        #as.numeric(mean((predict(rf,test)-test$y)^2))
-        final.rf$predicted <- predicted
-        final.rf$formula <- formula
+        rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = F,
+                     importance = "impurity",mtry = x[1],
+                     min.node.size = x[3],
+                     sample.fraction = sample.fraction)
 
-        if(rf_gbm.save){
-          final.rf$RF <- rf
+
+        if(is.character(rf)){
+          return(list("CPE"=0,"CI"=0,"infl"=NA,"predicted"=NA,
+                      "bestTreeForPrediction"=NA))
         }
 
+        predicted<- predict(rf,test)$predictions
+        CPE <- as.numeric(phcpe(coxph(Surv(time,status) ~predicted,data=test),out.ties=out.ties))
+        CI <- as.numeric(concordance(coxph(Surv(time,status) ~ predicted,
+                                           test))$concordance)
+        return(list("CPE"=CPE,"CI"=CI,"infl"=importance(rf),"predicted"=predicted,"rf"=rf))
+
+      })
+
+
+      if(sum(vapply(BestPerf,"[[","CPE",FUN.VALUE = numeric(1)),na.rm = T)==0){return(NULL)}
+      index <- which.max(vapply(BestPerf,"[[","CPE",FUN.VALUE = numeric(1)))
+
+      rf <- BestPerf[[index]]$rf
+      final.rf$method <- "RF"
+      final.rf$Vars <- importance(rf)
+
+      predicted <- rep(NA,nrow(data))
+      names(predicted) <- rownames(data)
+      predicted[match(rownames(test),names(predicted))] <- predict(rf,test)$predictions
+      final.rf$CPE <-  as.numeric(phcpe(coxph(testSurv ~predict(rf,test)$predictions),out.ties=out.ties))
+      final.rf$CI <- as.numeric(concordance(coxph(testSurv ~predict(rf,test)$predictions,
+                                                  test))$concordance)
+      final.rf$predicted <- predicted
+      final.rf$formula <- formula
+
+      if(rf_gbm.save){
+        final.rf$RF <- rf
       }
-      else{
-        final.rf <- NULL
-      }
+
+      # if(tune.rf == T){
+      #   train.task = makeRegrTask(data = train, target = "y")
+      #   # Tuning
+      #   res = tuneRanger(train.task, num.trees = nTree,  #measure = list(mse),
+      #                    parameters = list(replace = FALSE, respect.unordered.factors = "order"),
+      #                    num.threads = 1, iters = 50, save.file.path = NULL,show.info = F,
+      #                    build.final.model = F)
+      #
+      #   if(!is.null(res$recommended.pars[1])) mtry <- as.numeric(res$recommended.pars[1])
+      #   if(!is.null(res$recommended.pars[2])) rf.node <- as.numeric(res$recommended.pars[2])
+      #   if(!is.null(res$recommended.pars[3])) sample.fraction <- as.numeric(res$recommended.pars[3])
+      #   else sample.fraction <- 2/3
+      #
+      #   rf <- ranger(formula = y~., data = train, num.trees = nTree,replace = F,
+      #                importance = "impurity",mtry = mtry,
+      #                min.node.size = rf.node,
+      #                sample.fraction = sample.fraction) #floor(ncol(train)/3)
+      # }
+      # else{
+      #   rf <- ranger(formula = y~., data = train, num.trees = nTree,replace = F,
+      #                importance = "impurity",mtry = mtry,
+      #                min.node.size = rf.node)
+      # }
+
+      # if(typeof(rf) != "character"){
+      #   final.rf$method <- "RF"
+      #   final.rf$Vars <- importance(rf)
+      #
+      #   predicted <- rep(NA,nrow(data))
+      #   names(predicted) <- rownames(data)
+      #   predicted[match(rownames(test),names(predicted))] <- predict(rf,test)$predictions
+      #   final.rf$CPE <-  as.numeric(phcpe(coxph(testSurv ~predict(rf,test)$predictions),out.ties=out.ties))
+      #   final.rf$CI <- as.numeric(concordance(coxph(testSurv ~predict(rf,test)$predictions,
+      #                                               test))$concordance)
+      #   #as.numeric(mean((predict(rf,test)-test$y)^2))
+      #   final.rf$predicted <- predicted
+      #   final.rf$formula <- formula
+      #
+      #   if(rf_gbm.save){
+      #     final.rf$RF <- rf
+      #   }
+      #
+      # }
+      # else{
+      #   final.rf <- NULL
+      # }
+
+
       return(final.rf)
     }
     if(save){save(RF,file = paste0(pathResults,"/",studyType,"_RF.Rdata"))
