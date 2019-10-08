@@ -427,8 +427,15 @@ OncoCast <- function(data,formula, method = c("ENET"),
       }
       train$y <- residuals(fit,type="martingale")
 
+      train.task = makeRegrTask(data = train, target = "y")
+      # Tuning
+      res = tuneRanger(train.task, num.trees = 1000,  #measure = list(mse),
+                       num.threads = 1, iters = 70, save.file.path = NULL,show.info = F)
+
       rf <- ranger(formula = y~., data = train, num.trees = nTree,replace = F,
-                   importance = "impurity",mtry = mtry,min.node.size = rf.node) #floor(ncol(train)/3)
+                   importance = "impurity",mtry = as.numeric(res$recommended.pars["mtry"]),
+                   min.node.size = as.numeric(res$recommended.pars["min.node.size"]),
+                   sample.fraction = as.numeric(res$recommended.pars["sample.fraction"])) #floor(ncol(train)/3)
 
       if(typeof(rf) != "character"){
         final.rf$method <- "RF"
