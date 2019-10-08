@@ -449,8 +449,9 @@ OncoCast <- function(data,formula, method = c("ENET"),
         }
 
         predicted<- predict(rf,test)$predictions
-        CPE <- as.numeric(phcpe(coxph(Surv(time,status) ~predicted,data=test),out.ties=out.ties))
-        CI <- as.numeric(concordance(coxph(Surv(time,status) ~ predicted,
+
+        CPE <- as.numeric(phcpe(coxph(testSurv ~predicted,data=test),out.ties=out.ties))
+        CI <- as.numeric(concordance(coxph(testSurv ~ predicted,
                                            test))$concordance)
         return(list("CPE"=CPE,"CI"=CI,"infl"=importance(rf),"predicted"=predicted,"rf"=rf))
 
@@ -467,9 +468,8 @@ OncoCast <- function(data,formula, method = c("ENET"),
       predicted <- rep(NA,nrow(data))
       names(predicted) <- rownames(data)
       predicted[match(rownames(test),names(predicted))] <- predict(rf,test)$predictions
-      final.rf$CPE <-  as.numeric(phcpe(coxph(testSurv ~predict(rf,test)$predictions),out.ties=out.ties))
-      final.rf$CI <- as.numeric(concordance(coxph(testSurv ~predict(rf,test)$predictions,
-                                                  test))$concordance)
+      final.rf$CPE <-  BestPerf[[index]]$CPE
+      final.rf$CI <- BestPerf[[index]]$CI
       final.rf$predicted <- predicted
       final.rf$formula <- formula
 
