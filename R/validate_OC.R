@@ -90,7 +90,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
   if(OC_object[[1]]$method %in% c("GBM","RF","SVM")){
 
     if(OC_object[[1]]$method == "GBM") features <- OC_object[[1]]$GBM$var.names
-    if(OC_object[[1]]$method == "RF") features <- rownames(OC_object[[1]]$RF$importance)
+    if(OC_object[[1]]$method == "RF") features <- OC_object[[1]]$RF$forest$independent.variable.names
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
     if(!all(is.na(match(colnames(in.data),features)))){
       matched.genes <- c(na.omit(match(colnames(in.data),features)))
@@ -114,7 +114,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
 
       if(OC_object[[1]]$method == "RF") {
         all.pred <- lapply(OC_object,function(x){
-          predict(x$RF,new.dat)
+          predict(x$RF,new.dat)$predictions
         })}
 
       if(OC_object[[1]]$method == "SVM") {

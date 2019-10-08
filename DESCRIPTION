@@ -31,9 +31,9 @@ Imports:
 	R.utils,
 	rmarkdown,
 	knitr,
-	randomForest,
 	e1071,
-	CPE
+	CPE,
+	ranger
 Depends:
 	survival,
 	penalized,
@@ -53,6 +53,6 @@ Depends:
 	R.utils,
 	rmarkdown,
 	knitr,
-	randomForest,
 	e1071,
-	CPE
+	CPE,
+	ranger

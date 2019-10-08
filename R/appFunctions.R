@@ -405,7 +405,7 @@ validate.app <- function(OC_object,LassoFits,ori.risk,qts,in.data,formula){
   if(OC_object[[1]]$method %in% c("GBM","RF","SVM")){
 
     if(OC_object[[1]]$method == "GBM") features <- OC_object[[1]]$GBM$var.names
-    if(OC_object[[1]]$method == "RF") features <- rownames(OC_object[[1]]$RF$importance)
+    if(OC_object[[1]]$method == "RF") features <- OC_object[[1]]$RF$forest$independent.variable.names
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
 
     if(!all(is.na(match(colnames(in.data),features)))){
@@ -430,7 +430,7 @@ validate.app <- function(OC_object,LassoFits,ori.risk,qts,in.data,formula){
 
       if(OC_object[[1]]$method == "RF") {
         all.pred <- lapply(OC_object,function(x){
-          predict(x$RF,new.dat)
+          predict(x$RF,new.dat)$predictions
         })}
 
       if(OC_object[[1]]$method == "SVM") {
@@ -600,7 +600,7 @@ predIncomingSurv.app <- function(OC_object,new.data,surv.print= NULL,riskRefit){
   if(OC_object[[1]]$method %in% c("GBM","RF","SVM")){
 
     if(OC_object[[1]]$method == "GBM") features <- OC_object[[1]]$GBM$var.names
-    if(OC_object[[1]]$method == "RF") features <- rownames(OC_object[[1]]$RF$importance)
+    if(OC_object[[1]]$method == "RF") features <- OC_object[[1]]$RF$forest$independent.variable.names
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
 
     if(!all(is.na(match(colnames(new.data),features)))){
@@ -625,7 +625,7 @@ predIncomingSurv.app <- function(OC_object,new.data,surv.print= NULL,riskRefit){
 
       if(OC_object[[1]]$method == "RF") {
         all.pred <- lapply(OC_object,function(x){
-          predict(x$RF,new.dat)
+          predict(x$RF,new.dat)$predictions
         })}
 
       if(OC_object[[1]]$method == "SVM") {

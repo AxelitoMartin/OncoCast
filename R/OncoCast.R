@@ -75,7 +75,6 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
                      out.ties=F,cv.folds=5,rf.node=5){
 
-
   # Missingness
   if(anyNA(data)){
     stop("ERROR : Missing data is not allowed at this time, please remove or impute missing data.")
@@ -420,66 +419,32 @@ OncoCast <- function(data,formula, method = c("ENET"),
         fit <- coxph(Surv(time1,time2,status)~1,data=train)
         train <- train[,-match(c("time1","time2","status"),colnames(train))]
         testSurv <- with(test,Surv(time1,time2,status))
-        # test$y <- residuals(coxph(Surv(time1,time2,status)~1,data=test),type="martingale")
       }
       else{
         fit <- coxph(Surv(time,status)~1,data=train)
         train <- train[,-match(c("time","status"),colnames(train))]
         testSurv <- with(test,Surv(time,status))
-        # test$y <- residuals(coxph(Surv(time,status)~1,data=test),type="martingale")
       }
       train$y <- residuals(fit,type="martingale")
 
-      # rf <- try(randomForest(y~.,data = train,mtry = round(ncol(train)/3,digits = 0),
-      #                        importance=T,ntree = nTree,nodesize = rf.node,replace = F),silent=T)
-
-      rf <- tuneRF(train[,-match("y",colnames(train))], train$y,
-                     plot = F,replace = F,trace =F,importance = T,
-                     ntreeTry=nTree, stepFactor=1, improve=0.01,doBest=TRUE,nodesize = rf.node)
-
+      rf <- ranger(formula = y~., data = train, num.trees = nTree,
+                   importance = "impurity",mtry = floor(ncol(train)/3))
 
       if(typeof(rf) != "character"){
         final.rf$method <- "RF"
-        final.rf$Vars <- rf$importance[,2]
+        final.rf$Vars <- importance(rf)
 
         predicted <- rep(NA,nrow(data))
         names(predicted) <- rownames(data)
-        predicted[match(rownames(test),names(predicted))] <- predict(rf,test)
-        final.rf$CPE <-  as.numeric(phcpe(coxph(testSurv ~predict(rf,test)),out.ties=out.ties))
-        final.rf$CI <- as.numeric(concordance(coxph(testSurv ~predict(rf,test),
+        predicted[match(rownames(test),names(predicted))] <- predict(rf,test)$predictions
+        final.rf$CPE <-  as.numeric(phcpe(coxph(testSurv ~predict(rf,test)$predictions),out.ties=out.ties))
+        final.rf$CI <- as.numeric(concordance(coxph(testSurv ~predict(rf,test)$predictions,
                                            test))$concordance)
         #as.numeric(mean((predict(rf,test)-test$y)^2))
         final.rf$predicted <- predicted
         final.rf$formula <- formula
 
         if(rf_gbm.save){
-
-          # fix forest #
-          # index <- which.min(rf$mse)
-          # new.rf <- rf
-          # new.rf$forest$ndbigtree <- rf$forest$ndbigtree[1:index]
-          # new.rf$forest$nodestatus <- rf$forest$nodestatus[,1:index]
-          # new.rf$forest$leftDaughter <- rf$forest$leftDaughter[,1:index]
-          # new.rf$forest$rightDaughter <- rf$forest$rightDaughter[,1:index]
-          # new.rf$forest$nodepred <- rf$forest$nodepred[,1:index]
-          # new.rf$forest$bestvar <- rf$forest$bestvar[,1:index]
-          # new.rf$forest$xbestsplit <- rf$forest$xbestsplit[,1:index]
-          #
-          # new.dat <- read.csv("Test/appTest_valdata.csv",row.names = 1)
-          # new.dat$Cov11 <- rep(0,nrow(new.dat))
-          # new.dat$Cov12 <- rep(0,nrow(new.dat))
-          # new.dat$Cov13 <- rep(0,nrow(new.dat))
-          # new.dat$Cov14 <- rep(0,nrow(new.dat))
-          # new.dat$Cov15 <- rep(0,nrow(new.dat))
-          # predict(new.rf,new.dat)
-          ##############
-          rf$call <- NULL
-          rf$predicted <- NULL
-          rf$mse <- NULL
-          rf$rsq <- NULL
-          rf$oob.times <- NULL
-          rf$importanceSD <- NULL
-          rf$y <- NULL
           final.rf$RF <- rf
         }
 
