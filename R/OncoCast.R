@@ -441,7 +441,8 @@ OncoCast <- function(data,formula, method = c("ENET"),
         rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = replace,
                      importance = "impurity",mtry = x[1],
                      min.node.size = x[3],
-                     sample.fraction = x[4])
+                     sample.fraction = x[4],
+                     max.depth = x[5])
 
 
         if(is.character(rf)){
