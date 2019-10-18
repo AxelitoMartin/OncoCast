@@ -50,6 +50,11 @@
 #' @param rf_gbm.save For RF and GBM only. In order to perform proper validation we must save the entire boosted forest. This will require more memory space to save.
 #' If you plan to perform validation set to TRUE. Defaults is FALSE.
 #' @param cv.folds Number of internal cross-validations to be performed in GBM.
+#' @param mtry Number of features to include in each tree (for random forest). Default is 1/3 of all features.
+#' @param replace Boolean to sample with or without replacement for the samples (for random forest). Default is T.
+#' @param sample.fraction Fraction of samples to be used in random forest (default is 1).
+#' @param max.depth Maximum of depth of trees to be grown. Default trees are grown as much as possible.
+#' @param rf.node The minimal size of terminal nodes for random forest. Default is 5 (recommended for regression trees).
 #' @param out.ties phcpe argument to calculate the concordance index. If out.ties is set to FALSE,
 #' pairs of observations tied on covariates will be used to calculate the CPE. Otherwise, they will not be used.
 #' @return CI : For each iteration the concordance index of the generated model will be calculated on the testing set
@@ -73,8 +78,8 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      nonPenCol = NULL,
                      nTree=500,interactions=c(1,2),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
-                     out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),replace = F,
-                     sample.fraction=0.632,max.depth = NULL){
+                     out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),replace = T,
+                     sample.fraction=1,max.depth = NULL){
 
   # Missingness
   if(anyNA(data)){
