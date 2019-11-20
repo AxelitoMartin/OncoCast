@@ -37,11 +37,29 @@ ui <- dashboardPage(
       tabItem(tabName = "run",
               h1("Choose OncoCast parameters"),
               mainPanel(
-                radioButtons("dist", "Distribution type:",
-                             c("Normal" = "norm",
-                               "Uniform" = "unif",
-                               "Log-normal" = "lnorm",
-                               "Exponential" = "exp"))
+                radioButtons("method", "Select a method:",
+                             c("LASSO" = "LASSO",
+                               "ENET" = "ENET",
+                               "RF" = "RF",
+                               "GBM" = "GBM")),
+
+                sliderInput("runs", label = "Select number of runs", min = 25,
+                            max = 200, value = 50,step = 10),
+                conditionalPanel(
+                  condition = 'input.method == "RF" || input.method == "GBM"', #c("RF","GBM")
+                  sliderInput("nTree", label = "Select number of trees per run", min = 100,
+                              max = 1000, value = 500,step = 100)
+                ),
+                fileInput("data.run", "Choose a time data CSV file (make sure you set all the other parameters first):",
+                          accept = c(
+                            "text/csv",
+                            "text/comma-separated-values,text/plain",
+                            ".csv")
+                )
+                # ,
+                # htmlOutput("dataLoad")
+                #,
+                # submitButton("Run OncoCast")
               )),
 
       # First tab content
@@ -90,7 +108,7 @@ ui <- dashboardPage(
                                        "Find gene(s) : ",
                                        value = "")#,
                              # submitButton("Submit")
-                             ),
+                ),
                 mainPanel(
                   htmlOutput("VolcanoHeader"),width = 12,
                   plotlyOutput("effectPlot"),
@@ -184,8 +202,25 @@ server <- function(input, output) {
   ##### Make sure file was loaded correctly and that all#####
 
   OC_object <- reactive({
-    OC_object <-load_object(input$file$datapath)
-    OC_object <- Filter(Negate(is.null), OC_object)
+    if(input$choice=="Load OncoCast run"){
+      OC_object <-load_object(input$file$datapath)
+      OC_object <- Filter(Negate(is.null), OC_object)
+    }
+
+    else{
+      cores <- max(detectCores()-2,1)
+      out <- OncoCast(dat(),formula= Surv(time,status)~., method = input$method,
+                           runs = input$runs,cores = 1,
+                           pathResults = ".",studyType = "",save = F,
+                           nonPenCol = NULL,
+                           nTree=500,interactions=c(1,2),
+                           shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = T,
+                           out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),replace = T,
+                           sample.fraction=1,max.depth = NULL)
+      OC_object <- out[[1]]
+      out <- NULL
+    }
+
     return(OC_object)})
 
 
@@ -209,7 +244,10 @@ server <- function(input, output) {
   ##### Loading corresponding data as csv ... #####
   ##### Run get results and store them under appropriate name outputs #####
 
-  dat <- reactive({read.csv(input$data$datapath,row.names = 1)})
+  dat <- reactive({
+    if(input$choice=="Load OncoCast run") read.csv(input$data$datapath,row.names = 1)
+    else read.csv(input$data.run$datapath,row.names = 1)
+    })
   results <- reactive({
     return(Progno.tab(OC_object(),data=dat()))
   })

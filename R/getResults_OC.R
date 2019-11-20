@@ -409,12 +409,17 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
     if(LT == FALSE){NewObject <- with(data[data$RiskGroup == i,],Surv(time,status))}
     Fit <- survfit(NewObject ~ 1,data=data[data$RiskGroup == i,], conf.type = "log-log")
     # med.index <- which.min(abs(Fit$surv-0.5))
-    YR3.index <- which.min(abs(Fit$time-YR1))
-    YR5.index <- which.min(abs(Fit$time-YR3))
+    YR1.index <- which.min(abs(Fit$time-YR1))
+    YR3.index <- which.min(abs(Fit$time-YR3))
     survivalGroup[i,] <- c(as.numeric(round(summary(Fit)$table[7],digits=2)),
                            paste0("(",as.numeric(round(summary(Fit)$table[8],digits=2)),",",
                                   as.numeric(round(summary(Fit)$table[9],digits=2)),")"),
-                           round(Fit$surv[YR3.index],digits=2),round(Fit$surv[YR5.index],digits=2))
+                           paste0(round(Fit$surv[YR1.index],digits=2)," (",
+                                  round(Fit$lower[YR1.index],digits=2),",",
+                                  round(Fit$upper[YR1.index],digits=2),")"),
+                           paste0(round(Fit$surv[YR3.index],digits=2)," (",
+                                  round(Fit$lower[YR3.index],digits=2),",",
+                                  round(Fit$upper[YR3.index],digits=2),")"))
   }
 
 
