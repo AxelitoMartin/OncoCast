@@ -325,11 +325,11 @@ OncoCast <- function(data,formula, method = c("ENET"),
         noPen.index <- match(nonPenCol,colnames(train))
         noPen.index.pen <-c(1:2,noPen.index)}
 
-      # lambda1s <- c(0,0.01,0.05,0.1,0.2,0.5,1,2,5,10)
-      # lambda2s <- c(0,0.01,0.05,0.1,0.2,0.5,1,2,5,10)
+      lambda1s <- c(0,0.01,0.05,0.1,0.2,0.5,1,2,5,10)
+      lambda2s <- c(0,0.01,0.05,0.1,0.2,0.5,1,2,5,10)
 
-      lambda1s <- c(0.05,0.1,0.5,1)
-      lambda2s <- c(0.05,0.1,0.5,1)
+      # lambda1s <- c(0.05,0.1,0.5,1)
+      # lambda2s <- c(0.05,0.1,0.5,1)
 
       lambdaGrid <- expand.grid(.lambda1s = lambda1s,
                                 .lambda2s = lambda2s)
