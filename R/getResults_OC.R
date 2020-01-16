@@ -52,7 +52,7 @@
 
 
 
-getResults_OC <- function(OC_object,data,numGroups=2,cuts=0.5,geneList=NULL,mut.data=F,plotQuant=1){
+getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plotQuant=1){
 
   OC_object <- Filter(Negate(is.null), OC_object)
   method <- OC_object[[1]]$method
@@ -196,7 +196,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
       selectInflPlot <- plot_ly(data = resultsAll, x = ~MeanCoefficient, y = ~SelectionFrequency,
                                 text = ~paste('Gene :',GeneName,
                                               '</br> Hazard Ratio :',round(exp(MeanCoefficient),digits=2)),
-                                mode = "markers") %>% #,size = ~MutationFrequency,color = ~MutationFrequency
+                                mode = "markers",size = ~MutationFrequency,color = ~MeanCoefficient) %>%
         layout(title ="Volcano Plot",annotations = a)
     }
 
@@ -204,7 +204,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
       selectInflPlot <- plot_ly(data = resultsAll, x = ~MeanCoefficient, y = ~SelectionFrequency,
                                 text = ~paste('Gene :',GeneName,
                                               '</br> Hazard Ratio :',round(exp(MeanCoefficient),digits=2)),
-                                mode = "markers") %>% #,size = ~MutationFrequency,color = ~MutationFrequency) %>%
+                                mode = "markers",size = ~MutationFrequency,color = ~MeanCoefficient) %>%
         layout(title ="Volcano Plot")
     }
 
@@ -349,17 +349,39 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
 
 
   ######### RISK STRATIFICATION ############
-  # generate groups #
-  if(length(cuts) != (numGroups-1)){stop("Mismatch between number of groups and cuts! Length of cuts argument should equal numGroups-1")}
-  qts <- quantile(average.risk,cuts)
-  riskGroup <- c()
-  for(i in 1:length(average.risk)){
-    temp <- average.risk[i] - qts
-    if(length(match(names(which.max(temp[temp<0])),names(qts))) == 1) riskGroup[i] <- match(names(which.max(temp[temp<0])),names(qts))
-    else riskGroup[i] <- numGroups
+  if(is.null(cuts)){
+    # apply kmeans and take smallest #
+    dists <- c()
+    for(i in 2:5){
+      temp <- kmeans(average.risk,centers = i)
+      dists[i] <- temp$tot.withinss + 2*i*nrow(temp$centers)
+    }
+    numGroups <- which.min(dists)
+    temp <- kmeans(average.risk,centers = numGroups)
+    riskGroupTemp <- temp$cluster
+    qts <- c()
+    count <- 1
+    for(i in order(temp$centers)) {
+      qts[count] <- as.numeric(average.risk[names(which.max(average.risk[riskGroupTemp == i]))])
+      count = count + 1
+    }
+    riskGroup <- c()
+    map <- order(temp$centers)
+    names(map) <- as.character(1:numGroups)
+    riskGroup <- names(map[match(riskGroupTemp,map)])
+  }
+  else {
+    numGroups <- length(cuts)+1
+    qts <- quantile(average.risk,cuts)
+    riskGroup <- c()
+    for(i in 1:length(average.risk)){
+      temp <- average.risk[i] - qts
+      if(length(match(names(which.max(temp[temp<0])),names(qts))) == 1) riskGroup[i] <- match(names(which.max(temp[temp<0])),names(qts))
+      else riskGroup[i] <- numGroups
+    }
+    if(numGroups == 2){riskGroup[is.na(riskGroup)] <- 1}
   }
 
-  if(numGroups == 2){riskGroup[is.na(riskGroup)] <- 1}
   data$RiskGroup <- riskGroup
   data$RiskGroup <- factor(data$RiskGroup, levels = c(1:numGroups) )
 

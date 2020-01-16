@@ -96,8 +96,6 @@ detectCores()
 We recommend setting the number of cross-validation to 50 (runs=50) as a minimum. We pipe the results to an R list object called Out.
 
 ```{r}
-# library(OncoCast)
-# library(survival)
 Out <- OncoCast(data=survData,formula = Surv(time,status)~.,
                 method = "LASSO",runs = 50,
                 save = F,nonPenCol = NULL,cores =1)
@@ -122,7 +120,7 @@ These results will be further fed in the getResults_OC function that will let us
 We will see how to use this function only with the LASSO output generated above.
 
 ```{r,message=F}
-lasso.results <- getResults_OC(Out$LASSO,data=survData,numGroups=4,cuts = c(0.25,0.5,0.75),mut.data = T)
+lasso.results <- getResults_OC(Out$LASSO,data=survData,cuts = c(0.25,0.5,0.75),mut.data = T)
 ```
 
 ## Distribution of risk score
