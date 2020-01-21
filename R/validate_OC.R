@@ -53,7 +53,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
     features <- colnames(LassoFits)
 
     dums <- apply(in.data,2,function(x){anyNA(as.numeric(as.character(x)))})
-    if(sum(dums)){
+    if(sum(dums) > 0){
       tmp <- in.data %>%
         select(which(dums)) %>%
         fastDummies::dummy_cols(remove_first_dummy = T) %>%
@@ -109,7 +109,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
 
     dums <- apply(in.data,2,function(x){anyNA(as.numeric(as.character(x)))})
-    if(sum(dums)){
+    if(sum(dums) > 0){
       tmp <- in.data %>%
         select(which(dums)) %>%
         fastDummies::dummy_cols(remove_first_dummy = T) %>%
