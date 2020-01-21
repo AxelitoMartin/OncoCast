@@ -61,4 +61,6 @@ Depends:
     randomForest,
     mlr,
     ranger,
-    dplyr
+    dplyr,
+    dtplyr,
+    fastDummies
