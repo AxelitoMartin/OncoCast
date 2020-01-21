@@ -52,6 +52,21 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
     LassoFits <- as.matrix(Results$Fits)
     features <- colnames(LassoFits)
 
+    dums <- apply(in.data,2,function(x){anyNA(as.numeric(as.character(x)))})
+    if(sum(dums)){
+      tmp <- in.data %>%
+        select(which(dums)) %>%
+        fastDummies::dummy_cols(remove_first_dummy = T) %>%
+        select(-one_of(names(which(dums))))
+      in.data <- as.data.frame(cbind(
+        in.data %>% select(-one_of(names(which(dums)))),
+        tmp
+      ) %>% mutate_all(as.character) %>%
+        mutate_all(as.numeric)
+      )
+      warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
+    }
+
     if(!all(is.na(match(colnames(in.data),features)))){
       matched.genes <- c(na.omit(match(colnames(in.data),features)))
       new.dat <- in.data[,which(!is.na(match(colnames(in.data),features)))]
@@ -92,6 +107,22 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
     if(OC_object[[1]]$method == "GBM") features <- OC_object[[1]]$GBM$var.names
     if(OC_object[[1]]$method == "RF") features <- OC_object[[1]]$RF$forest$independent.variable.names
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
+
+    dums <- apply(in.data,2,function(x){anyNA(as.numeric(as.character(x)))})
+    if(sum(dums)){
+      tmp <- in.data %>%
+        select(which(dums)) %>%
+        fastDummies::dummy_cols(remove_first_dummy = T) %>%
+        select(-one_of(names(which(dums))))
+      in.data <- as.data.frame(cbind(
+        in.data %>% select(-one_of(names(which(dums)))),
+        tmp
+      ) %>% mutate_all(as.character) %>%
+        mutate_all(as.numeric)
+      )
+      warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
+    }
+
     if(!all(is.na(match(colnames(in.data),features)))){
       matched.genes <- c(na.omit(match(colnames(in.data),features)))
       new.dat <- in.data[,which(!is.na(match(colnames(in.data),features)))]

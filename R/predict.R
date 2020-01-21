@@ -51,6 +51,20 @@ predIncomingSurv <- function(OC_object,new.data,surv.print= NULL,riskRefit){
     ################################
     features <- colnames(LassoFits)
 
+    dums <- apply(new.data,2,function(x){anyNA(as.numeric(as.character(x)))})
+    if(sum(dums)){
+      tmp <- new.data %>%
+        select(which(dums)) %>%
+        fastDummies::dummy_cols(remove_first_dummy = T) %>%
+        select(-one_of(names(which(dums))))
+      new.data <- as.data.frame(cbind(
+        new.data %>% select(-one_of(names(which(dums)))),
+        tmp
+      ) %>% mutate_all(as.character) %>%
+        mutate_all(as.numeric)
+      )
+      warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
+    }
 
     if(!all(is.na(match(colnames(new.data),features)))){
       matched.genes <- c(na.omit(match(colnames(new.data),features)))
@@ -89,6 +103,22 @@ predIncomingSurv <- function(OC_object,new.data,surv.print= NULL,riskRefit){
     if(OC_object[[1]]$method == "GBM") features <- OC_object[[1]]$GBM$var.names
     if(OC_object[[1]]$method == "RF") features <- OC_object[[1]]$RF$forest$independent.variable.names
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
+
+    dums <- apply(new.data,2,function(x){anyNA(as.numeric(as.character(x)))})
+    if(sum(dums)){
+      tmp <- new.data %>%
+        select(which(dums)) %>%
+        fastDummies::dummy_cols(remove_first_dummy = T) %>%
+        select(-one_of(names(which(dums))))
+      new.data <- as.data.frame(cbind(
+        new.data %>% select(-one_of(names(which(dums)))),
+        tmp
+      ) %>% mutate_all(as.character) %>%
+        mutate_all(as.numeric)
+      )
+      warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
+    }
+
     if(!all(is.na(match(colnames(new.data),features)))){
       matched.genes <- c(na.omit(match(colnames(new.data),features)))
       new.dat <- new.data[,which(!is.na(match(colnames(new.data),features)))]
