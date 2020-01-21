@@ -117,6 +117,27 @@ OncoCast <- function(data,formula, method = c("ENET"),
                     c(1:ncol(data))[-timevars])]
   }
 
+  # perform data cleaning #
+  # dat <- as.data.frame(matrix(c(1.123,2.12,.312,.13,1,1,0,1,"a","a","c","a",1,2,2,4),nrow =4))
+  # colnames(dat) <- c("time","status","somechar","somenum")
+  dums <- apply(data,2,function(x){anyNA(as.numeric(as.character(x)))})
+  data.save = F
+  if(sum(dums)){
+    tmp <- data %>%
+      select(which(dums)) %>%
+      fastDummies::dummy_cols(remove_first_dummy = T) %>%
+      select(-one_of(names(which(dums))))
+    data <- as.data.frame(cbind(
+      data %>% select(-one_of(names(which(dums)))),
+      tmp
+    ) %>% mutate_all(as.character) %>%
+      mutate_all(as.numeric)
+    )
+    data.save = T
+    warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
+  }
+
+  #
   print("Data check performed, ready for analysis.")
 
 
@@ -448,10 +469,10 @@ OncoCast <- function(data,formula, method = c("ENET"),
         set.seed(21071993)
 
         if(!is.null(max.depth)) rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = replace,
-                     importance = "impurity",mtry = x[1],
-                     min.node.size = x[3],
-                     sample.fraction = x[4],
-                     max.depth = x[5])
+                                             importance = "impurity",mtry = x[1],
+                                             min.node.size = x[3],
+                                             sample.fraction = x[4],
+                                             max.depth = x[5])
         else rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = replace,
                           importance = "impurity",mtry = x[1],
                           min.node.size = x[3],
@@ -743,7 +764,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
   if(!is.null(RF)){OUTPUT$RF <- RF}
   if(!is.null(GBM)){OUTPUT$GBM <- GBM}
   if(!is.null(SVM)){OUTPUT$SVM <- SVM}
-
+  if(data.save == T) {OUTPUT$data <-data}
   if(!is.null(OUTPUT)){
     return(OUTPUT)}
   else{return(0)}
