@@ -122,7 +122,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
   # colnames(dat) <- c("time","status","somechar","somenum")
   dums <- apply(data,2,function(x){anyNA(as.numeric(as.character(x)))})
   data.save = F
-  if(sum(dums)){
+  if(sum(dums) > 0){
     tmp <- data %>%
       select(which(dums)) %>%
       fastDummies::dummy_cols(remove_first_dummy = T) %>%

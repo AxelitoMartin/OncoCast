@@ -52,7 +52,7 @@ predIncomingSurv <- function(OC_object,new.data,surv.print= NULL,riskRefit){
     features <- colnames(LassoFits)
 
     dums <- apply(new.data,2,function(x){anyNA(as.numeric(as.character(x)))})
-    if(sum(dums)){
+    if(sum(dums) > 0){
       tmp <- new.data %>%
         select(which(dums)) %>%
         fastDummies::dummy_cols(remove_first_dummy = T) %>%
@@ -105,7 +105,7 @@ predIncomingSurv <- function(OC_object,new.data,surv.print= NULL,riskRefit){
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
 
     dums <- apply(new.data,2,function(x){anyNA(as.numeric(as.character(x)))})
-    if(sum(dums)){
+    if(sum(dums) > 0){
       tmp <- new.data %>%
         select(which(dums)) %>%
         fastDummies::dummy_cols(remove_first_dummy = T) %>%
