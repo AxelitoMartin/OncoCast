@@ -58,6 +58,21 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
   method <- OC_object[[1]]$method
   formula <- OC_object[[1]]$formula
 
+  dums <- apply(data,2,function(x){anyNA(as.numeric(as.character(x)))})
+  if(sum(dums) > 0){
+    tmp <- data %>%
+      select(which(dums)) %>%
+      fastDummies::dummy_cols(remove_first_dummy = T) %>%
+      select(-one_of(names(which(dums))))
+    data <- as.data.frame(cbind(
+      data %>% select(-one_of(names(which(dums)))),
+      tmp
+    ) %>% mutate_all(as.character) %>%
+      mutate_all(as.numeric)
+    )
+    warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
+  }
+
   # appropriate formula
   survFormula <- as.formula(formula)
   survResponse <- survFormula[[2]]
