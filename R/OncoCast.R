@@ -57,6 +57,8 @@
 #' @param rf.node The minimal size of terminal nodes for random forest. Default is 5 (recommended for regression trees).
 #' @param out.ties phcpe argument to calculate the concordance index. If out.ties is set to FALSE,
 #' pairs of observations tied on covariates will be used to calculate the CPE. Otherwise, they will not be used.
+#' @param epsilon.svm epsilon sequence for SVM. Default is seq(0,0.2,0.02)
+#' @param cost.svm cost sequence for SVM. Default is 2^(2:9)
 #' @return CI : For each iteration the concordance index of the generated model will be calculated on the testing set
 #' @return fit : For LASSO, RIDGE and ENET methods return the refitted cox proportional hazard model with the beta coefficients found
 #' in the penalized regression model.
@@ -79,7 +81,8 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      nTree=500,interactions=c(1,2),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
                      out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),replace = T,
-                     sample.fraction=1,max.depth = NULL){
+                     sample.fraction=1,max.depth = NULL,
+                     epsilon.svm = seq(0,0.2,0.02), cost.svm = 2^(2:9)){
 
   # Missingness
   if(anyNA(data)){
@@ -571,66 +574,70 @@ OncoCast <- function(data,formula, method = c("ENET"),
   ### SVM ###
   ###########
 
-  # if("SVM" %in% method) {
-  #   print("SVM SELECTED")
-  #   final.svm <- list()
-  #   SVM <- foreach(run=1:runs) %dopar% {
-  #
-  #     set.seed(run)
-  #     cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"SVM_log.txt"), append=TRUE)
-  #
-  #     rm.samples <- sample(1:nrow(data), ceiling(nrow(data)*1/3),replace = FALSE)
-  #     train <- data[-rm.samples,]
-  #     test <- data[rm.samples,]
-  #
-  #     if(LT){
-  #       fit <- coxph(Surv(time1,time2,status)~1,data=train)
-  #       train <- train[,-match(c("time1","time2","status"),colnames(train))]
-  #       test$y <- residuals(coxph(Surv(time1,time2,status)~1,data=test),type="martingale")
-  #     }
-  #     else{
-  #       fit <- coxph(Surv(time,status)~1,data=train)
-  #       train <- train[,-match(c("time","status"),colnames(train))]
-  #       test$y <- residuals(coxph(Surv(time,status)~1,data=test),type="martingale")
-  #     }
-  #     train$y <- residuals(fit,type="martingale")
-  #
-  #
-  #     SVM.tune <- tune(svm, y~.,  data = train,
-  #                      ranges = list(epsilon = seq(0,0.2,0.02), cost = 2^(2:9)))
-  #
-  #     SVM <- svm(y~.,  data = train,
-  #                epsilon = as.numeric(SVM.tune$best.parameters[1]),
-  #                cost = as.numeric(SVM.tune$best.parameters[2]))
-  #     cat(typeof(SVM)!= "character", file=paste0(studyType,"SVM_log.txt"), append=TRUE)
-  #
-  #     # apply(SVM$SV,2,mean)
-  #
-  #     if(typeof(SVM)!= "character"){
-  #       predicted <- rep(NA,nrow(data))
-  #       names(predicted) <- rownames(data)
-  #       predicted[match(rownames(test),names(predicted))] <- predict(SVM,newdata = test)
-  #
-  #       final.svm$CI <- as.numeric(mean((predict(SVM,newdata = test)-test$y)^2))
-  #
-  #       # coefs <- as.data.frame(apply(SVM$SV,2,mean))
-  #       final.svm$Vars <- apply(SVM$SV,2,function(x){median(abs(x)) }) #as.data.frame(
-  #       final.svm$predicted <- predicted
-  #       final.svm$formula <- formula
-  #       final.svm$method <- "SVM"
-  #       if(rf_gbm.save) final.svm$SVM <- SVM
-  #     }
-  #
-  #     else{
-  #       final.svm <- NULL
-  #     }
-  #
-  #     return(final.svm)
-  #   }
-  #   if(save){
-  #     save(SVM,file = paste0(pathResults,studyType,"_SVM.Rdata"))
-  #     SVM <- NULL}
-  # }
+  if("SVM" %in% method) {
+    print("SVM SELECTED")
+    final.svm <- list()
+    SVM <- foreach(run=1:runs) %dopar% {
+
+      set.seed(run)
+      cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"SVM_log.txt"), append=TRUE)
+
+      rm.samples <- sample(1:nrow(data), ceiling(nrow(data)*1/3),replace = FALSE)
+      train <- data[-rm.samples,]
+      test <- data[rm.samples,]
+
+      if(LT){
+        fit <- coxph(Surv(time1,time2,status)~1,data=train)
+        train <- train[,-match(c("time1","time2","status"),colnames(train))]
+        testSurv <- with(test,Surv(time1,time2,status))
+      }
+      else{
+        fit <- coxph(Surv(time,status)~1,data=train)
+        train <- train[,-match(c("time","status"),colnames(train))]
+        testSurv <- with(test,Surv(time,status))
+      }
+      train$y <- residuals(fit,type="martingale")
+
+
+      SVM.tune <- tune(svm, y~.,  data = train,
+                       ranges = list(epsilon = epsilon.svm, cost = cost.svm))
+
+      SVM <- svm(y~.,  data = train,
+                 epsilon = as.numeric(SVM.tune$best.parameters[1]),
+                 cost = as.numeric(SVM.tune$best.parameters[2]))
+      cat(typeof(SVM)!= "character", file=paste0(studyType,"SVM_log.txt"), append=TRUE)
+
+      # apply(SVM$SV,2,mean)
+
+      if(typeof(SVM)!= "character"){
+        predicted <- rep(NA,nrow(data))
+        names(predicted) <- rownames(data)
+        predicted[match(rownames(test),names(predicted))] <- predict(SVM,newdata = test)
+
+        CPE <- as.numeric(phcpe(coxph(testSurv ~predict(SVM,newdata = test)),out.ties=out.ties))
+        final.svm$CPE <- CPE
+        CI <- as.numeric(concordance(coxph(testSurv ~predict(SVM,newdata = test),
+                                           test))$concordance)
+        final.svm$CI <- CI
+
+        # coefs <- as.data.frame(apply(SVM$SV,2,mean))
+        final.svm$Vars <- apply(SVM$SV,2,function(x){median(abs(x)) }) #as.data.frame(
+        final.svm$predicted <- predicted
+        final.svm$formula <- formula
+        final.svm$method <- "SVM"
+        if(rf_gbm.save) final.svm$SVM <- SVM
+      }
+
+      else{
+        final.svm <- NULL
+      }
+
+      return(final.svm)
+    }
+    if(save){
+      save(SVM,file = paste0(pathResults,studyType,"_SVM.Rdata"))
+      SVM <- NULL}
+  }
 
   ###########
   ### GBM ###

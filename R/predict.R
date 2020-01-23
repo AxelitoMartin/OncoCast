@@ -29,7 +29,6 @@
 #' Incoming <- predIncomingSurv(test$LASSO,new.data=new.data,
 #' surv.print = c(5,10,15),riskRefit = results$RiskRefit)
 
-
 predIncomingSurv <- function(OC_object,new.data,surv.print= NULL,riskRefit){
 
   OC_object <- Filter(Negate(is.null), OC_object)
@@ -180,52 +179,55 @@ predIncomingSurv <- function(OC_object,new.data,surv.print= NULL,riskRefit){
   ## Creat survival curves for patients of interest ##
   ####################################################
 
-  if(!is.null(surv.print)){
-    mut <- new.data[surv.print,]
-    colnames(mut)[ncol(mut)] <- "RiskScore"
+  if(is.null(surv.print)) surv.print <- 1:nrow(new.data)
+  mut <- new.data[surv.print,]
+  colnames(mut)[ncol(mut)] <- "RiskScore"
 
-    allSurvs <- data.frame(nrow= 5)
+  allSurvs <- data.frame(nrow= 5)
 
-    for(j in 1:nrow(mut)){
-      survival.probs <- as.data.frame(matrix(nrow=6,ncol=15))
-      rownames(survival.probs) <- c("Patient","Surv","Lower","Upper","Time","OncoRiskScore")
-      surv.temp <- survfit(riskRefit, newdata = mut[j,])
-      for(i in 1:ncol(survival.probs)){
-        survival.probs[,i] <- try(c(rownames(mut)[j],as.numeric(summary(surv.temp, times = (i*3-3))$surv),
-                                    round(summary(surv.temp, times = (i*3-3))$lower,digits=2),
-                                    round(summary(surv.temp, times = (i*3-3))$upper,digits=2),
-                                    i*3-3,as.numeric(mut$RiskScore[j])),silent=T)
-      }
-      allSurvs <- cbind(allSurvs,survival.probs)
+  for(j in 1:nrow(mut)){
+    survival.probs <- as.data.frame(matrix(nrow=6,ncol=15))
+    rownames(survival.probs) <- c("Patient","Surv","Lower","Upper","Time","OncoRiskScore")
+    surv.temp <- survfit(riskRefit, newdata = mut[j,])
+    for(i in 1:ncol(survival.probs)){
+      survival.probs[,i] <- try(c(rownames(mut)[j],as.numeric(summary(surv.temp, times = (i*3-3))$surv),
+                                  round(summary(surv.temp, times = (i*3-3))$lower,digits=2),
+                                  round(summary(surv.temp, times = (i*3-3))$upper,digits=2),
+                                  i*3-3,as.numeric(mut$RiskScore[j])),silent=T)
     }
-    allSurvs <- allSurvs[,-1]
-
-    a <- list(
-      autotick = FALSE,
-      dtick = 6,
-      tickcolor = toRGB("black")
-    )
-
-    t.survival.probs <- as.data.frame(t(allSurvs))
-    for(k in 2:ncol(t.survival.probs)){
-      t.survival.probs[,k] <- as.numeric(as.character(t.survival.probs[,k]))
-    }
-    y <- list(
-      title = "Survival Probability"
-    )
-    IndSurvKM <- plot_ly(t.survival.probs, x = ~Time, y = ~Surv, name = ~Patient, type = 'scatter',
-                         mode = 'lines+markers',hoverinfo="hovertext",color = ~Patient,
-                         hovertext = ~paste("Genetic Risk Score :",round(OncoRiskScore,digits=3))
-    ) %>% layout(yaxis = y,xaxis = ~a) %>%
-      layout(xaxis = list(title = paste0("Time (Months)"), showgrid = TRUE),showlegend = FALSE) %>%
-      add_ribbons(data = t.survival.probs,
-                  ymin = ~Lower,
-                  ymax = ~Upper,
-                  line = list(color = 'rgba(7, 164, 181, 0.05)'),
-                  fillcolor = 'rgba(7, 164, 181, 0.2)',
-                  name = "Confidence Interval") #%>% layout(showlegend = FALSE)
-
+    allSurvs <- cbind(allSurvs,survival.probs)
   }
-  else{IndSurvKM = NULL}
+  allSurvs <- allSurvs[,-1]
+
+  a <- list(
+    autotick = FALSE,
+    dtick = 6,
+    tickcolor = toRGB("black")
+  )
+
+  t.survival.probs <- as.data.frame(t(allSurvs))
+  for(k in 2:ncol(t.survival.probs)){
+    t.survival.probs[,k] <- as.numeric(as.character(t.survival.probs[,k]))
+  }
+  y <- list(
+    title = "Survival Probability"
+  )
+  IndSurvKM <- plot_ly(t.survival.probs, x = ~Time, y = ~Surv, name = ~Patient, type = 'scatter',
+                       mode = 'lines+markers',hoverinfo="hovertext",color = ~Patient,
+                       hovertext = ~paste("Genetic Risk Score :",round(OncoRiskScore,digits=3))
+  ) %>% layout(yaxis = y,xaxis = ~a) %>%
+    layout(xaxis = list(title = paste0("Time (Months)"), showgrid = TRUE),showlegend = FALSE) %>%
+    add_ribbons(data = t.survival.probs,
+                ymin = ~Lower,
+                ymax = ~Upper,
+                line = list(color = 'rgba(7, 164, 181, 0.05)'),
+                fillcolor = 'rgba(7, 164, 181, 0.2)',
+                name = "Confidence Interval") #%>% layout(showlegend = FALSE)
+
+  # }
+  # else{
+  #   IndSurvKM = NULL
+  #   t.survival.probs
+  # }
   return(list("data.out" = new.data,"RiskHist"=RiskHistogram.new,"IncKM" = IndSurvKM,"survivalEst"=t.survival.probs))
 }
