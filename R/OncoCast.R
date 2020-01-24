@@ -20,7 +20,7 @@
 # #' and "multinomial".
 #'
 #' @param method Character vector of the names of the method(s) to be used, options are : 1) LASSO ("LASSO") 2) Ridge ("RIDGE")
-#'  3) Elastic Net ("ENET"), 4) Random Forest ("RF"), 5) Support vector machine ("SVM") 6) Boosted Forest ("GBM"). Note that GBM requires training in order to perform optimally. Arguments in that objectives are listed below.
+#'  3) Elastic Net ("ENET"), 4) Random Forest ("RF"), 5) Support vector machine ("SVM") 6) Boosted Forest ("GBM") 7) Neural network ("NN"). Note that GBM requires training in order to perform optimally. Arguments in that objectives are listed below.
 #'  Default is ENET.
 #' @param runs Number of cross validation iterations to be performed. Default is 100. We highly recommend performing at least 50.
 #'
@@ -47,8 +47,8 @@
 #' @param min.node For GBM only. Integer specifying the minimum number of observations in the terminal nodes
 #' of the trees. Note that this is the actual number of observations, not the total
 #' weight. Beware that nodes must be small if n is small. Default are c(10,20).
-#' @param rf_gbm.save For RF and GBM only. In order to perform proper validation we must save the entire boosted forest. This will require more memory space to save.
-#' If you plan to perform validation set to TRUE. Defaults is FALSE.
+#' @param rf_gbm.save For RF, GBM, SVM and NN only. In order to perform proper validation we must save the entire fit. This will require more memory space to save.
+#' If you plan to perform validation set to TRUE. Default is FALSE.
 #' @param cv.folds Number of internal cross-validations to be performed in GBM.
 #' @param mtry Number of features to include in each tree (for random forest). Default is 1/3 of all features.
 #' @param replace Boolean to sample with or without replacement for the samples (for random forest). Default is T.
@@ -59,6 +59,9 @@
 #' pairs of observations tied on covariates will be used to calculate the CPE. Otherwise, they will not be used.
 #' @param epsilon.svm epsilon sequence for SVM. Default is seq(0,0.2,0.02)
 #' @param cost.svm cost sequence for SVM. Default is 2^(2:9)
+#' @param layers a vector input for neural network method, each entry representing the number of nodes to be used at the given hidden layer.
+#' The number of hidden layers is determined by the length of the vector. Default is NULL in which case a single hidden layer will be used with diverse neuron numbers (recommended).
+#' @param norm.nn Boolean value to decide if the data for the nerual network should be normalized. Default is true (recommended).
 #' @return CI : For each iteration the concordance index of the generated model will be calculated on the testing set
 #' @return fit : For LASSO, RIDGE and ENET methods return the refitted cox proportional hazard model with the beta coefficients found
 #' in the penalized regression model.
@@ -82,7 +85,8 @@ OncoCast <- function(data,formula, method = c("ENET"),
                      shrinkage=c(0.001,0.01),min.node=c(10,20),rf_gbm.save = F,
                      out.ties=F,cv.folds=5,rf.node=5,mtry = floor(ncol(data)/3),replace = T,
                      sample.fraction=1,max.depth = NULL,
-                     epsilon.svm = seq(0,0.2,0.02), cost.svm = 2^(2:9)){
+                     epsilon.svm = seq(0,0.2,0.02), cost.svm = 2^(2:9),
+                     layers = NULL,norm.nn = T){
 
   # Missingness
   if(anyNA(data)){
@@ -90,7 +94,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
   }
 
   # check arguments
-  if( anyNA(match(method,c("LASSO","ENET","RIDGE","RF","GBM","SVM"))) ){stop("ERROR : The method you have selected is not available.")}
+  if( anyNA(match(method,c("LASSO","ENET","RIDGE","RF","GBM","SVM","NN"))) ){stop("ERROR : The method you have selected is not available.")}
 
 
   if(runs < 0){stop("The number of cross-validation/bootstraps MUST be positive.")}
@@ -158,6 +162,7 @@ OncoCast <- function(data,formula, method = c("ENET"),
   RF <- NULL
   GBM <- NULL
   SVM <- NULL
+  NN <- NULL
 
 
   ########## LASSO #############
@@ -758,6 +763,96 @@ OncoCast <- function(data,formula, method = c("ENET"),
       GBM <- NULL}
   }
 
+
+  ##########
+  ### NN ###
+  ##########
+  if("NN" %in% method){
+    final.nn <- list()
+    print("NN SELECTED")
+
+    # if(norm.nn){
+    #   if(LT) rm <- 1:3
+    #   if(!LT) rm <- 1:2
+    #   maxs <- apply(data[,-rm], 2, max)
+    #   mins <- apply(data[,-rm], 2, min)
+    #
+    #   data[,-rm] <- as.data.frame(scale(data[-rm], center = mins, scale = maxs - mins))
+    # }
+
+    NN <- foreach(run=1:runs) %dopar% {
+
+      set.seed(run)
+      cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"NN_log.txt"), append=TRUE)
+
+      rm.samples <- sample(1:nrow(data), ceiling(nrow(data)*1/3),replace = FALSE)
+      train <- data[-rm.samples,]
+      test <- data[rm.samples,]
+
+      if(LT){
+        fit <- coxph(Surv(time1,time2,status)~1,data=train)
+        train <- train[,-match(c("time1","time2","status"),colnames(train))]
+        testSurv <- with(test,Surv(time1,time2,status))
+      }
+      else{
+        fit <- coxph(Surv(time,status)~1,data=train)
+        train <- train[,-match(c("time","status"),colnames(train))]
+        testSurv <- with(test,Surv(time,status))
+      }
+      train$y <- residuals(fit,type="martingale")
+      covs <- colnames(train)
+      f <- as.formula(paste("y ~", paste(covs[!covs %in% "y"], collapse = " + ")))
+
+      if(is.null(layers)){
+        n <- ncol(train)
+        sub.layers <- round(c(n*4/5,n*3/4,n*2/3,n/2,n/3,n/4,n/5))
+        out <- lapply(sub.layers,function(x){
+          nn <- neuralnet(f,data=train,hidden=x,linear.output=T)
+          pred <- predict(nn,test)
+
+          predicted <- rep(NA,nrow(data))
+          names(predicted) <- rownames(data)
+          predicted[match(rownames(test),names(predicted))] <- pred
+
+          CPE <- as.numeric(phcpe(coxph(testSurv ~pred),out.ties=out.ties))
+          CI <- as.numeric(concordance(coxph(testSurv ~pred,
+                                             test))$concordance)
+          return(list(nnet=nn,CPE=CPE,CI=CI))
+        })
+      }
+      index <- which.max(vapply(out, "[[", "CPE", FUN.VALUE = numeric(1)))
+      nn <- out[[index]]$nnet
+      pred <- predict(nn,test)
+
+      predicted <- rep(NA,nrow(data))
+      names(predicted) <- rownames(data)
+      predicted[match(rownames(test),names(predicted))] <- pred
+
+      CPE <- as.numeric(phcpe(coxph(testSurv ~pred),out.ties=out.ties))
+      final.nn$CPE <- CPE
+      CI <- as.numeric(concordance(coxph(testSurv ~pred,
+                                         test))$concordance)
+      final.nn$CI <- CI
+
+      Vars <- garson(nn)$data
+      Vars <- Vars[match(colnames(train),Vars$x_names),]
+      Vars <- Vars[complete.cases(Vars),1]
+      names(Vars) <- colnames(train)[-match("y",colnames(train))]
+      final.nn$Vars <- Vars
+      final.nn$predicted <- predicted
+      final.nn$formula <- formula
+      final.nn$method <- "NN"
+      final.nn$layer <- sub.layers[index]
+      if(rf_gbm.save) final.nn$NN <- nn
+
+      return(final.nn)
+    }
+
+    if(save){save(NN,file = paste0(pathResults,"/",studyType,"_NN.Rdata"))
+      NN <- NULL}
+  }
+
+
   ################
   stopCluster(cl)
   ################
@@ -771,6 +866,8 @@ OncoCast <- function(data,formula, method = c("ENET"),
   if(!is.null(RF)){OUTPUT$RF <- RF}
   if(!is.null(GBM)){OUTPUT$GBM <- GBM}
   if(!is.null(SVM)){OUTPUT$SVM <- SVM}
+  if(!is.null(NN)){OUTPUT$NN <- NN}
+
   if(data.save == T) {OUTPUT$data <-data}
   if(!is.null(OUTPUT)){
     return(OUTPUT)}

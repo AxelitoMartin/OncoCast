@@ -102,11 +102,12 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
   }
 
 
-  if(OC_object[[1]]$method %in% c("GBM","RF","SVM")){
+  if(OC_object[[1]]$method %in% c("GBM","RF","SVM","NN")){
 
     if(OC_object[[1]]$method == "GBM") features <- OC_object[[1]]$GBM$var.names
     if(OC_object[[1]]$method == "RF") features <- OC_object[[1]]$RF$forest$independent.variable.names
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
+    if(OC_object[[1]]$method == "NN") features <- names(OC_object[[1]]$Vars)
 
     dums <- apply(in.data,2,function(x){anyNA(as.numeric(as.character(x)))})
     if(sum(dums) > 0){
@@ -151,6 +152,11 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
       if(OC_object[[1]]$method == "SVM") {
         all.pred <- lapply(OC_object,function(x){
           predict(x$SVM,new.dat)
+        })}
+
+      if(OC_object[[1]]$method == "NN") {
+        all.pred <- lapply(OC_object,function(x){
+          predict(x$NN,new.dat)
         })}
     }
     else{
