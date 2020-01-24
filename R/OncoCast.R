@@ -771,14 +771,15 @@ OncoCast <- function(data,formula, method = c("ENET"),
     final.nn <- list()
     print("NN SELECTED")
 
-    # if(norm.nn){
-    #   if(LT) rm <- 1:3
-    #   if(!LT) rm <- 1:2
-    #   maxs <- apply(data[,-rm], 2, max)
-    #   mins <- apply(data[,-rm], 2, min)
-    #
-    #   data[,-rm] <- as.data.frame(scale(data[-rm], center = mins, scale = maxs - mins))
-    # }
+    if(norm.nn){
+      if(LT) rm <- 1:3
+      if(!LT) rm <- 1:2
+      maxs <- apply(data[,-rm], 2, max)
+      mins <- apply(data[,-rm], 2, min)
+
+      data[,-rm] <- as.data.frame(scale(data[-rm], center = mins, scale = maxs - mins))
+      data.save = T
+    }
 
     NN <- foreach(run=1:runs) %dopar% {
 
