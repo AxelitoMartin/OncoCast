@@ -63,4 +63,6 @@ Depends:
     ranger,
     dplyr,
     dtplyr,
-    fastDummies
+    fastDummies,
+    neuralnet,
+    NeuralNetTools

@@ -225,13 +225,13 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
 
   }
 
-  if(method %in% c("GBM","RF","SVM")) {
+  if(method %in% c("GBM","RF","SVM","NN")) {
     #### Variables ####
     if(LT) Variables <- colnames(data)[-c(1:3)]
     if(!LT) Variables <- colnames(data)[-c(1:2)]
 
     imp <- sapply(OC_object,"[[","Vars")
-    #imp <- do.call("cbind",OC_object$Vars)
+    # if(method == "NN") rownames(imp) <- Variables
     mean.imp <- apply(imp,1,mean)
 
     # for 10 top medians make boxplot
@@ -321,7 +321,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
   if(sum(uniques == 2) > 2){
     genes <- names(uniques[which(uniques == 2)])
     if(method %in% c("LASSO","RIDGE","ENET") ) keep <- names(sort(selectFreq[match(genes,names(selectFreq))],decreasing = T)[1:pmin(15,length(genes))])
-    if(method %in% c("GBM","RF","SVM")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
+    if(method %in% c("GBM","RF","SVM","NN")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
 
     if(!is.null(geneList)){
       if(length(geneList) < 15){
@@ -342,7 +342,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
   if(sum(uniques > 2) > 2){
     genes <- names(uniques[which(uniques > 2)])
     if(method %in% c("LASSO","RIDGE","ENET") ) keep <- names(sort(selectFreq[match(genes,names(selectFreq))],decreasing = T)[1:pmin(15,length(genes))])
-    if(method %in% c("GBM","RF","SVM")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
+    if(method %in% c("GBM","RF","SVM","NN")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
 
     if(!is.null(geneList)){
       if(length(geneList) < 15){
@@ -461,14 +461,14 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
 
 
   ################## Mutational profiles #################
-  if(method %in% c("GBM","RF","SVM")){topHits <- names(topHits)}
+  if(method %in% c("GBM","RF","SVM","NN")){topHits <- names(topHits)}
   if(mut.data){
 
     sub.dat <- data[,match(c(topHits),colnames(data))]
     #mut.table <- group_by(sub.dat,RiskGroup) %>% summarise(Mutations = n())
     mutDistrib <- do.call("cbind",apply(sub.dat,2,function(x){
       temp <- as.data.frame(cbind(x,riskGroup))
-      temp2 <- group_by(temp,riskGroup) %>% summarise(Mutations = sum(x))
+      temp2 <- group_by(temp,riskGroup) %>% summarise(Mutations = sum(as.numeric(as.character(x))))
       return(temp2[,2]/nrow(data))
     }))
     colnames(mutDistrib) <- colnames(sub.dat)
