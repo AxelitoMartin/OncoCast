@@ -367,6 +367,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
   if(is.null(cuts)){
     # apply kmeans and take smallest #
     dists <- c()
+    set.seed(21071993)
     for(i in 2:5){
       temp <- kmeans(average.risk,centers = i)
       dists[i] <- temp$tot.withinss + 2*i*nrow(temp$centers)
