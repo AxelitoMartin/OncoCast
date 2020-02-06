@@ -232,7 +232,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
 
     imp <- sapply(OC_object,"[[","Vars")
     # if(method == "NN") rownames(imp) <- Variables
-    mean.imp <- apply(imp,1,mean)
+    mean.imp <- apply(scale(imp),1,mean)
 
     # for 10 top medians make boxplot
     topHits <- sort(mean.imp,decreasing = T)[1:pmin(length(Variables),20)]
