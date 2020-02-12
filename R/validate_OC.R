@@ -39,11 +39,14 @@
 
 
 
-validate <- function(OC_object,Results,in.data,formula,limit = NULL){
+validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
+
+  args <- list(...)
+  surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
+  risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
 
   OC_object <- Filter(Negate(is.null), OC_object)
   means.train <- sapply(OC_object,"[[","means")
-
   qts = Results$rawCuts
   ori.risk <- as.numeric(Results$risk.raw)
 
@@ -256,22 +259,22 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
     if(!LT) limit <- as.numeric(max(in.data$time))
   }
 
-  if(length(qts) == 2){
-    if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
-                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T,palette = c("chartreuse3","cyan4","darkgoldenrod2")) + xlab("Time") +
+  # if(length(qts) == 2){
+  #   if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
+  #                            data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T,palette = c("chartreuse3","cyan4","darkgoldenrod2")) + xlab("Time") +
+  #     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
+  #   if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
+  #                            data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T,palette = c("chartreuse3","cyan4","darkgoldenrod2")) + xlab("Time") +
+  #     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
+  # }
+  # else{
+    if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = risk.table) + xlab("Time") +
       labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
-    if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
-                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T,palette = c("chartreuse3","cyan4","darkgoldenrod2")) + xlab("Time") +
+    if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = risk.table) + xlab("Time") +
       labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
-  }
-  else{
-    if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
-                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T) + xlab("Time") +
-      labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
-    if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
-                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T) + xlab("Time") +
-      labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
-  }
+  # }
 
   return(list("RiskHistogram.new"=RiskHistogram.new,"out.data"=in.data,"KM"=KM))
 
