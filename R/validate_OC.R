@@ -39,11 +39,14 @@
 
 
 
-validate <- function(OC_object,Results,in.data,formula,limit = NULL){
+validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
+
+  args <- list(...)
+  surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
+  risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
 
   OC_object <- Filter(Negate(is.null), OC_object)
   means.train <- sapply(OC_object,"[[","means")
-
   qts = Results$rawCuts
   ori.risk <- as.numeric(Results$risk.raw)
 
@@ -256,24 +259,39 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL){
     if(!LT) limit <- as.numeric(max(in.data$time))
   }
 
-  if(length(qts) == 2){
-    if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
-                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T,palette = c("chartreuse3","cyan4","darkgoldenrod2")) + xlab("Time") +
-      labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
-    if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
-                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T,palette = c("chartreuse3","cyan4","darkgoldenrod2")) + xlab("Time") +
-      labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
-  }
-  else{
-    if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
-                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T) + xlab("Time") +
-      labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
-    if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,#surv.median.line = "hv",
-                             data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = T) + xlab("Time") +
-      labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
+  if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+                           data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = risk.table) + xlab("Time") +
+    labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
+  if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+                           data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = risk.table) + xlab("Time") +
+    labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
+
+
+  survivalGroup <- as.data.frame(matrix(nrow=numGroups,ncol=4))
+  rownames(survivalGroup) <- 1:numGroups
+  colnames(survivalGroup) <- c("MedianOS","95%CI","1Ysurvival","3Ysurvival")
+  # for each group find closest value to median
+  if(timeType == "Months"){YR1 <- 1*12;YR3 <- 3*12}
+  if(timeType == "Days"){YR1 <- 1*365;YR3 <- 3*365}
+  for(i in 1:numGroups){
+    if(LT == TRUE){NewObject <- with(in.data[in.data$RiskGroup == i,],Surv(time1,time2,status))}
+    if(LT == FALSE){NewObject <- with(in.data[in.data$RiskGroup == i,],Surv(time,status))}
+    Fit <- survfit(NewObject ~ 1,data=in.data[in.data$RiskGroup == i,], conf.type = "log-log")
+    # med.index <- which.min(abs(Fit$surv-0.5))
+    YR1.index <- which.min(abs(Fit$time-YR1))
+    YR3.index <- which.min(abs(Fit$time-YR3))
+    survivalGroup[i,] <- c(as.numeric(round(summary(Fit)$table[7],digits=2)),
+                           paste0("(",as.numeric(round(summary(Fit)$table[8],digits=2)),",",
+                                  as.numeric(round(summary(Fit)$table[9],digits=2)),")"),
+                           paste0(round(Fit$surv[YR1.index],digits=2)," (",
+                                  round(Fit$lower[YR1.index],digits=2),",",
+                                  round(Fit$upper[YR1.index],digits=2),")"),
+                           paste0(round(Fit$surv[YR3.index],digits=2)," (",
+                                  round(Fit$lower[YR3.index],digits=2),",",
+                                  round(Fit$upper[YR3.index],digits=2),")"))
   }
 
-  return(list("RiskHistogram.new"=RiskHistogram.new,"out.data"=in.data,"KM"=KM))
+  return(list("RiskHistogram.new"=RiskHistogram.new,"out.data"=in.data,"KM"=KM,"survTable"=survivalGroup))
 
 }
 
