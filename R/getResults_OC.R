@@ -151,7 +151,10 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 
 outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,plotQuant=1,mut.data=F,LT,...){
 
-  args <- list()
+  args <- list(...)
+  surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
+  risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
+
   OC_object <- Filter(Negate(is.null), OC_object)
   MD <- 12
 
@@ -428,12 +431,12 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
   if(LT) limit <- as.numeric(quantile(data$time2,plotQuant))
   if(!LT) limit <- as.numeric(quantile(data$time,plotQuant))
 
-  # if(!exists("surv.median.line")) surv.median.line <- "hv"
-  # if(is.null(args[['surv.median.line']])) surv.median.line <- "hv"
-  if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+  if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
+                           surv.median.line = surv.median.line, risk.table = risk.table,
                            data = data,xlim=c(0,limit),break.time.by = 6,risk.table = T) + xlab("Time (Months)") +
     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
-  if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+  if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
+                           surv.median.line = surv.median.line, risk.table = risk.table,
                            data = data,xlim=c(0,limit),break.time.by = 6,risk.table = T) + xlab("Time (Months)") +
     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
 
