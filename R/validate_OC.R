@@ -268,7 +268,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
 
 
   survivalGroup <- as.data.frame(matrix(nrow=numGroups,ncol=4))
-  rownames(survivalGroup) <- 1:numGroups
+  rownames(survivalGroup) <- paste0("riskGroup ",1:numGroups)
   colnames(survivalGroup) <- c("MedianOS","95%CI","1Ysurvival","3Ysurvival")
   # for each group find closest value to median
   if(timeType == "Months"){YR1 <- 1*12;YR3 <- 3*12}
