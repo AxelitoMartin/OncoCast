@@ -18,6 +18,7 @@
 #' @param mut.data Boolean argument indicating if the user is using mutation predictors (binary data). Default is FALSE.
 #' @param plotQuant A numeric entry between 0-1 that defines what proportion of patients will be represented on the Kaplan-Meier plot.
 #' Particularly useful when a lot of patients with long survival are censored. Default is 1 (all patients are plotted).
+#' @param plot.cuts Bollean specifying the cuts made in the risk score should be plotted on the risk histogram
 #' @return CPE Summary of the distribution of the concordance probability estimate (see phcpe function) accross all runs. (Recommended)
 #' @return CI Summary of the distribution of the concordance index accross all runs. (Depreciated)
 #' @return inflPlot Bar plot of frequency of the 20 most selected features.
@@ -52,7 +53,7 @@
 
 
 
-getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plotQuant=1,...){
+getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plotQuant=1, plot.cuts = T,...){
 
   OC_object <- Filter(Negate(is.null), OC_object)
   method <- OC_object[[1]]$method
@@ -496,6 +497,11 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
     mutplot <- NULL
   }
 
+  if(plot.cuts){
+    RiskHistogram <- RiskHistogram +
+      geom_vline(xintercept = quantile(RiskScore, cuts),
+                 color = "blue", linetype = "dashed")
+  }
   return(list("CPE"=CPE,"CI" = CI.BP,"risk.raw"=average.risk,"scaled.risk"=RiskScore,
               "RiskHistogram"=RiskHistogram,"RiskScoreSummary"=as.data.frame(t(summary.RiskScore)),
               "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts),
