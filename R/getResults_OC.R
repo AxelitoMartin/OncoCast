@@ -18,7 +18,7 @@
 #' @param mut.data Boolean argument indicating if the user is using mutation predictors (binary data). Default is FALSE.
 #' @param plotQuant A numeric entry between 0-1 that defines what proportion of patients will be represented on the Kaplan-Meier plot.
 #' Particularly useful when a lot of patients with long survival are censored. Default is 1 (all patients are plotted).
-#' @param plot.cuts Bollean specifying the cuts made in the risk score should be plotted on the risk histogram
+#' @param plot.cuts Boolean specifying the cuts made in the risk score should be plotted on the risk histogram
 #' @return CPE Summary of the distribution of the concordance probability estimate (see phcpe function) accross all runs. (Recommended)
 #' @return CI Summary of the distribution of the concordance index accross all runs. (Depreciated)
 #' @return inflPlot Bar plot of frequency of the 20 most selected features.
@@ -97,7 +97,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
                     c(1:ncol(data))[-timevars])]
   }
 
-  return(outputSurv(OC_object,data,method,geneList,numGroups,cuts,plotQuant,mut.data,LT,...))
+  return(outputSurv(OC_object,data,method,geneList,numGroups,cuts,plotQuant,plot.cuts,mut.data,LT,...))
 
 }
 
@@ -121,6 +121,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #' plot. Recommend to note make groups smaller than 10 patients.
 #' @param cuts Vector argument of decimal numbers between 0 and 1 representing the quantiles where the groups will be formed.
 #' @param plotQuant Decimal number between 0 and 1, for the proportion of patients to be shown on the Kaplan-Meier plot.
+#' @param plot.cuts Boolean specifying the cuts made in the risk score should be plotted on the risk histogram
 #' @param mut.data Boolean indicating if the set of predictors are binary variables.
 #' @return ciSummary Summary of the distribution of the concordance index accross all runs.
 #' @return inflPlot Bar plot of frequency of the 20 most selected features.
@@ -150,7 +151,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #'                        geneList="NULL",numGroups,cuts,mut.data=T)
 
 
-outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,plotQuant=1,mut.data=F,LT,...){
+outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,plotQuant=1,plot.cuts=T,mut.data=F,LT,...){
 
   args <- list(...)
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
