@@ -260,10 +260,10 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
   }
 
   if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
-                           data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = risk.table) + xlab("Time") +
+                           data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
   if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
-                           data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = risk.table) + xlab("Time") +
+                           data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
 
 
