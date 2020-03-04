@@ -44,6 +44,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
   args <- list(...)
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
   risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
+  x.start <- ifelse(is.null(args[['x.start']]),0,args[['x.start']])
 
   OC_object <- Filter(Negate(is.null), OC_object)
   means.train <- sapply(OC_object,"[[","means")
