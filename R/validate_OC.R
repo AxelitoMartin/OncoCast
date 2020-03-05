@@ -8,6 +8,7 @@
 #' @param new.data New data set containing the information of the incoming patients. Should be a dataframe
 #' with patients as rows and features as columns.
 #' @param limit Optional numerical argument to set a time limit on the KM plot
+#' @param plot.cuts Boolean specifying if lines should be added to risk histogram to indicate where the cuts were performed
 #' @return data.out : The data frame inputted in the function with an additional column giving the predicted risk
 #' score of the incoming patients.
 #' @return RiskHist : A histogram of the distribution of the risk scores of patients in the given dataset.
@@ -39,7 +40,7 @@
 
 
 
-validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
+validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = T,...){
 
   args <- list(...)
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
@@ -290,6 +291,12 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
                            paste0(round(Fit$surv[YR3.index],digits=2)," (",
                                   round(Fit$lower[YR3.index],digits=2),",",
                                   round(Fit$upper[YR3.index],digits=2),")"))
+  }
+
+  if(plot.cuts){
+    RiskHistogram.new <- RiskHistogram.new +
+      geom_vline(xintercept = quantile(Results$scaled.risk, Results$rawCuts),
+                 color = "blue", linetype = "dashed")
   }
 
   return(list("RiskHistogram.new"=RiskHistogram.new,"out.data"=in.data,"KM"=KM,"survTable"=survivalGroup))
