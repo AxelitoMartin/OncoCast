@@ -292,6 +292,10 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
                                   round(Fit$lower[YR3.index],digits=2),",",
                                   round(Fit$upper[YR3.index],digits=2),")"))
   }
+  if(LT) fit <- coxph(Surv(time1,time2, status)~ as.factor(RiskGroup), data = in.data)
+  else fit <- coxph(Surv(time, status)~ as.factor(RiskGroup), data = in.data)
+  survivalGroup$HazardRatio <- ""
+  survivalGroup$HazardRatio[2:nrow(survivalGroup)] <- round(summary(fit)$coefficients[,2],digits = 3)
 
   if(plot.cuts){
     RiskHistogram.new <- RiskHistogram.new +
