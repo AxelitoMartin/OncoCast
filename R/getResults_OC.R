@@ -505,7 +505,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
   }
   return(list("CPE"=CPE,"CI" = CI.BP,"risk.raw"=average.risk,"scaled.risk"=RiskScore,
               "RiskHistogram"=RiskHistogram,"RiskScoreSummary"=as.data.frame(t(summary.RiskScore)),
-              "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts),
+              "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts),"cuts" = cuts,
               "uniVolcano"=uniVolcano,"topHits" = topHits,
               "selectInflPlot" = selectInflPlot,"Fits"=allCoefs,
               "heatmap.sorted.bin"=heatmap.sorted.bin,"heatmap.sorted.cont"=heatmap.sorted.cont,
