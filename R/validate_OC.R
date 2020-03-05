@@ -295,7 +295,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
 
   if(plot.cuts){
     RiskHistogram.new <- RiskHistogram.new +
-      geom_vline(xintercept = quantile(Results$scaled.risk, Results$cuts),
+      geom_vline(xintercept = as.numeric(quantile(Results$scaled.risk, Results$cuts)),
                  color = "blue", linetype = "dashed")
   }
 

@@ -500,7 +500,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
 
   if(plot.cuts){
     RiskHistogram <- RiskHistogram +
-      geom_vline(xintercept = quantile(RiskScore, cuts),
+      geom_vline(xintercept = as.numeric(quantile(RiskScore, cuts)),
                  color = "blue", linetype = "dashed")
   }
   return(list("CPE"=CPE,"CI" = CI.BP,"risk.raw"=average.risk,"scaled.risk"=RiskScore,
