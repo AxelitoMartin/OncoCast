@@ -468,7 +468,10 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
                                   round(Fit$lower[YR3.index],digits=2),",",
                                   round(Fit$upper[YR3.index],digits=2),")"))
   }
-
+  if(LT) fit <- coxph(Surv(time1,time2, status)~ as.factor(results$RiskGroup), data = data)
+  else fit <- coxph(Surv(time, status)~ as.factor(results$RiskGroup), data = data)
+  survivalGroup$HazardRatio <- ""
+  survivalGroup$HazardRatio[2:nrow(survivalGroup)] <- round(summary(fit)$coefficients[,2],digits = 3)
 
   ################## Mutational profiles #################
   if(method %in% c("GBM","RF","SVM","NN")){topHits <- names(topHits)}
