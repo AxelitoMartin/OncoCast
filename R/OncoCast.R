@@ -806,21 +806,21 @@ OncoCast <- function(data,formula, method = c("ENET"),
 
       if(is.null(layers)){
         n <- ncol(train)
-        sub.layers <- round(c(n*4/5,n*3/4,n*2/3,n/2,n/3,n/4,n/5))
-        out <- lapply(sub.layers,function(x){
-          nn <- neuralnet(f,data=train,hidden=x,linear.output=T)
-          pred <- predict(nn,test)
+        sub.layers <- round(c(n*4/5,n*3/4,n*2/3,n/2,n/3,n/4,n/5))}
+      else sub.layers <- layers
+      out <- lapply(sub.layers,function(x){
+        nn <- neuralnet(f,data=train,hidden=x,linear.output=T)
+        pred <- predict(nn,test)
 
-          predicted <- rep(NA,nrow(data))
-          names(predicted) <- rownames(data)
-          predicted[match(rownames(test),names(predicted))] <- pred
+        predicted <- rep(NA,nrow(data))
+        names(predicted) <- rownames(data)
+        predicted[match(rownames(test),names(predicted))] <- pred
 
-          CPE <- as.numeric(phcpe(coxph(testSurv ~pred),out.ties=out.ties))
-          CI <- as.numeric(concordance(coxph(testSurv ~pred,
-                                             test))$concordance)
-          return(list(nnet=nn,CPE=CPE,CI=CI))
-        })
-      }
+        CPE <- as.numeric(phcpe(coxph(testSurv ~pred),out.ties=out.ties))
+        CI <- as.numeric(concordance(coxph(testSurv ~pred,
+                                           test))$concordance)
+        return(list(nnet=nn,CPE=CPE,CI=CI))
+      })
       index <- which.max(vapply(out, "[[", "CPE", FUN.VALUE = numeric(1)))
       nn <- out[[index]]$nnet
       pred <- predict(nn,test)
