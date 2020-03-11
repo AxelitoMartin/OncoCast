@@ -465,12 +465,12 @@ OncoCast <- function(data,formula, method = c("ENET"),
 
       if(!is.null(max.depth)) rfGrid <- expand.grid(.mtry = mtry,
                                                     .n.trees = nTree,
-                                                    .n.minobsinnode = min.node,
+                                                    .n.minobsinnode = rf.node,
                                                     .sample.fraction = sample.fraction,
                                                     .max.depth = max.depth)
       else rfGrid <- expand.grid(.mtry = mtry,
                                  .n.trees = nTree,
-                                 .n.minobsinnode = min.node,
+                                 .n.minobsinnode = rf.node,
                                  .sample.fraction = sample.fraction)
 
       BestPerf <- apply(rfGrid,1,function(x){
