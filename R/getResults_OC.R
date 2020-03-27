@@ -385,9 +385,10 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
     qts <- c()
     count <- 1
     for(i in order(temp$centers)) {
-      qts[count] <- as.numeric(average.risk[names(which.max(average.risk[riskGroupTemp == i]))])
+      qts[count] <- as.numeric(average.risk[which.max(average.risk[riskGroupTemp == i])])
       count = count + 1
     }
+    cuts <- which(sort(average.risk) %in% qts)/length(average.risk)
     riskGroup <- c()
     map <- order(temp$centers)
     names(map) <- as.character(1:numGroups)
