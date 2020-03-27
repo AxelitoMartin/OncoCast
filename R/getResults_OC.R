@@ -386,7 +386,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,cuts=NULL,plotQuant=1
     qts <- c()
     count <- 1
     for(i in order(temp$centers)) {
-      qts[count] <- as.numeric(average.risk[which.max(average.risk[riskGroupTemp == i])])
+      qts[count] <- as.numeric(average.risk[names(which.max(average.risk[riskGroupTemp == i]))])
       count = count + 1
     }
     qts <- qts[-length(qts)]
@@ -508,7 +508,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,cuts=NULL,plotQuant=1
   }
   return(list("CPE"=CPE,"CI" = CI.BP,"risk.raw"=average.risk,"scaled.risk"=RiskScore,
               "RiskHistogram"=RiskHistogram,"RiskScoreSummary"=as.data.frame(t(summary.RiskScore)),
-              "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts),
+              "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts), "cuts" = cuts,
               "uniVolcano"=uniVolcano,"topHits" = topHits,
               "selectInflPlot" = selectInflPlot,"Fits"=allCoefs,
               "heatmap.sorted.bin"=heatmap.sorted.bin,"heatmap.sorted.cont"=heatmap.sorted.cont,
