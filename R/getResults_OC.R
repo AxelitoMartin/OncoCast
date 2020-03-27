@@ -379,7 +379,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,cuts=NULL,plotQuant=1
       temp <- kmeans(average.risk,centers = i)
       dists[i] <- temp$tot.withinss + 2*i*nrow(temp$centers)
     }
-    numGroups <- which.min(dists) + 1
+    numGroups <- which.min(dists)
     temp <- kmeans(average.risk,centers = numGroups)
     riskGroupTemp <- temp$cluster
     qts <- c()
