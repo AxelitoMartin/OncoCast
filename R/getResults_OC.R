@@ -375,12 +375,13 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,cuts=NULL,plotQuant=1
     # apply kmeans and take smallest #
     dists <- c()
     set.seed(21071993)
+    temp <- list()
     for(i in 2:5){
-      temp <- kmeans(average.risk,centers = i)
+      temp[[i]] <- kmeans(average.risk,centers = i)
       dists[i] <- temp$tot.withinss + 2*i*nrow(temp$centers)
     }
     numGroups <- which.min(dists)
-    temp <- kmeans(average.risk,centers = numGroups)
+    temp <- temp[[numGroups]]
     riskGroupTemp <- temp$cluster
     qts <- c()
     count <- 1
