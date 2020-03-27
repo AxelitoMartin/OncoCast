@@ -471,7 +471,10 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,cuts=NULL,plotQuant=1
                                   round(Fit$lower[YR3.index],digits=2),",",
                                   round(Fit$upper[YR3.index],digits=2),")"))
   }
-
+  if(LT) fit <- coxph(Surv(time1,time2, status)~ as.factor(RiskGroup), data = data)
+  else fit <- coxph(Surv(time, status)~ as.factor(RiskGroup), data = data)
+  survivalGroup$HazardRatio <- ""
+  survivalGroup$HazardRatio[2:nrow(survivalGroup)] <- round(summary(fit)$coefficients[,2],digits = 3)
 
   ################## Mutational profiles #################
   if(method %in% c("GBM","RF","SVM","NN")){topHits <- names(topHits)}
@@ -503,7 +506,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,cuts=NULL,plotQuant=1
 
   if(plot.cuts){
     RiskHistogram <- RiskHistogram +
-      geom_vline(xintercept = quantile(RiskScore, cuts),
+      geom_vline(xintercept = as.numeric(quantile(RiskScore, cuts)),
                  color = "blue", linetype = "dashed")
   }
   return(list("CPE"=CPE,"CI" = CI.BP,"risk.raw"=average.risk,"scaled.risk"=RiskScore,

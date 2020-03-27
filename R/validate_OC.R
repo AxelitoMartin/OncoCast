@@ -8,6 +8,7 @@
 #' @param new.data New data set containing the information of the incoming patients. Should be a dataframe
 #' with patients as rows and features as columns.
 #' @param limit Optional numerical argument to set a time limit on the KM plot
+#' @param plot.cuts Boolean specifying if lines should be added to risk histogram to indicate where the cuts were performed
 #' @return data.out : The data frame inputted in the function with an additional column giving the predicted risk
 #' score of the incoming patients.
 #' @return RiskHist : A histogram of the distribution of the risk scores of patients in the given dataset.
@@ -39,11 +40,12 @@
 
 
 
-validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
+validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = T,...){
 
   args <- list(...)
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
   risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
+  x.start <- ifelse(is.null(args[['x.start']]),0,args[['x.start']])
 
   OC_object <- Filter(Negate(is.null), OC_object)
   means.train <- sapply(OC_object,"[[","means")
@@ -260,10 +262,10 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
   }
 
   if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
-                           data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = risk.table) + xlab("Time") +
+                           data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
   if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
-                           data = in.data,break.time.by = 6,xlim=c(0,limit),risk.table = risk.table) + xlab("Time") +
+                           data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
     labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
 
 
@@ -289,6 +291,16 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,...){
                            paste0(round(Fit$surv[YR3.index],digits=2)," (",
                                   round(Fit$lower[YR3.index],digits=2),",",
                                   round(Fit$upper[YR3.index],digits=2),")"))
+  }
+  if(LT) fit <- coxph(Surv(time1,time2, status)~ as.factor(RiskGroup), data = in.data)
+  else fit <- coxph(Surv(time, status)~ as.factor(RiskGroup), data = in.data)
+  survivalGroup$HazardRatio <- ""
+  survivalGroup$HazardRatio[2:nrow(survivalGroup)] <- round(summary(fit)$coefficients[,2],digits = 3)
+
+  if(plot.cuts){
+    RiskHistogram.new <- RiskHistogram.new +
+      geom_vline(xintercept = as.numeric(quantile(Results$scaled.risk, Results$cuts)),
+                 color = "blue", linetype = "dashed")
   }
 
   return(list("RiskHistogram.new"=RiskHistogram.new,"out.data"=in.data,"KM"=KM,"survTable"=survivalGroup))
