@@ -97,7 +97,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
                     c(1:ncol(data))[-timevars])]
   }
 
-  return(outputSurv(OC_object,data,method,geneList,numGroups,cuts,plotQuant,plot.cuts,mut.data,LT,...))
+  return(outputSurv(OC_object,data,method,geneList,cuts,plotQuant,plot.cuts,mut.data,LT,...))
 
 }
 
@@ -151,7 +151,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #'                        geneList="NULL",numGroups,cuts,mut.data=T)
 
 
-outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,plotQuant=1,plot.cuts=T,mut.data=F,LT,...){
+outputSurv <- function(OC_object,data,method,geneList=NULL,cuts=NULL,plotQuant=1,plot.cuts=T,mut.data=F,LT,...){
 
   args <- list(...)
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
@@ -375,12 +375,13 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
     # apply kmeans and take smallest #
     dists <- c()
     set.seed(21071993)
+    temp.fits <- list()
     for(i in 2:5){
-      temp <- kmeans(average.risk,centers = i)
-      dists[i] <- temp$tot.withinss + 2*i*nrow(temp$centers)
+      temp.fits[[i]] <- kmeans(average.risk,centers = i)
+      dists[i] <- temp.fits[[i]]$tot.withinss + 2*i*nrow(temp.fits[[i]]$centers)
     }
     numGroups <- which.min(dists)
-    temp <- kmeans(average.risk,centers = numGroups)
+    temp <- temp.fits[[numGroups]]
     riskGroupTemp <- temp$cluster
     qts <- c()
     count <- 1
@@ -388,6 +389,8 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
       qts[count] <- as.numeric(average.risk[names(which.max(average.risk[riskGroupTemp == i]))])
       count = count + 1
     }
+    qts <- qts[-length(qts)]
+    cuts <- which(sort(average.risk) %in% qts)/length(average.risk)
     riskGroup <- c()
     map <- order(temp$centers)
     names(map) <- as.character(1:numGroups)
@@ -508,7 +511,7 @@ outputSurv <- function(OC_object,data,method,geneList=NULL,numGroups=2,cuts=0.5,
   }
   return(list("CPE"=CPE,"CI" = CI.BP,"risk.raw"=average.risk,"scaled.risk"=RiskScore,
               "RiskHistogram"=RiskHistogram,"RiskScoreSummary"=as.data.frame(t(summary.RiskScore)),
-              "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts),"cuts" = cuts,
+              "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts), "cuts" = cuts,
               "uniVolcano"=uniVolcano,"topHits" = topHits,
               "selectInflPlot" = selectInflPlot,"Fits"=allCoefs,
               "heatmap.sorted.bin"=heatmap.sorted.bin,"heatmap.sorted.cont"=heatmap.sorted.cont,
