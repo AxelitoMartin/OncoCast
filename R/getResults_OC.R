@@ -561,8 +561,7 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
       else topHits <- names(selectFreq[order(selectFreq,decreasing = T)])[1:10]
       ## get mu freq
-      if(LT) data.temp <- data[,-c(1:3)]
-      if(!LT) data.temp <- data[,-c(1:2)]
+      data.temp <- data[,-1]
       MutationFrequency <- apply(data.temp,2,function(x){
         sum(x)/length(x)
       })
@@ -659,13 +658,13 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
 
     ##### univariate volcano plot #####
-    uni <- as.data.frame(t(apply(data[,-1],2,function(x){
+    uni <- as.data.frame(t(apply(data[,-c(1,which(apply(data,2, function(x){length(unique(x)) == 1})))],2,function(x){
       fit <- glm(y~x,data = data, family = family)
       out <- as.numeric(summary(fit)$coefficients[2,c(1,4)])
       return(out)
     })))
     colnames(uni) <- c("Coefficient","Pvalue")
-    uni$Feature <- colnames(data)[-1]
+    uni$Feature <- colnames(data)[-c(1,which(apply(data,2, function(x){length(unique(x)) == 1})))]
 
 
     uniVolcano <- plot_ly(data = uni, x = ~Coefficient, y = ~-log10(Pvalue),
