@@ -954,8 +954,8 @@ OncoCast <- function(data,family,formula, method = c("ENET"),
             }
 
             bestTreeForPrediction <- gbm.perf.noprint(GBM)
-            predicted<- predict(GBM,newdata=test,n.trees = bestTreeForPrediction,type="link")
-            CI <- sum(round(predicted) == test$y)
+            predicted<- predict(GBM,newdata=test,n.trees = bestTreeForPrediction,type="response")
+            CI <- sum(round(predicted) == test$y) / nrow(test)
             return(list("CI"=CI,"infl"=relative.influence.noprint(GBM),"predicted"=predicted,
                         "bestTreeForPrediction"=bestTreeForPrediction,"GBM"=GBM))
           }
