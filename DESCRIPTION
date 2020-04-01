@@ -65,4 +65,5 @@ Depends:
     dtplyr,
     fastDummies,
     neuralnet,
-    NeuralNetTools
+    NeuralNetTools,
+    glmnet
