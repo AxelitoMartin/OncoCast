@@ -110,6 +110,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
     colnames(data)[match(as.list(temp.formula)[2],colnames(data))] <- "y"
     data <- data[,c(match("y",colnames(data)),
                     c(1:ncol(data))[-match("y",colnames(data))])]
+    LT = F
   }
 
   return(outputSurv(OC_object,data,family,method,geneList,cuts,plotQuant,plot.cuts,mut.data,LT,...))
@@ -549,7 +550,6 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
     if(method %in% c("LASSO","RIDGE","ENET")){
       allCoefs <- t(sapply(OC_object,"[[","fit"))
-      allCoefs[is.na(allCoefs)] <- 0
 
       meanCoefs <- apply(allCoefs,2,function(x){mean(x,na.rm = TRUE)})
       selectFreq <- apply(allCoefs,2,function(x){

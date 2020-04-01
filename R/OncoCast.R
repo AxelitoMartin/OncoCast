@@ -74,7 +74,7 @@
 #' method = "LASSO",runs = 50,
 #' save = F,nonPenCol = NULL,cores =2)
 
-OncoCast <- function(data,family,formula, method = c("ENET"),
+OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
                      runs = 100,cores = 1,
                      pathResults = ".",studyType = "",save = T,
                      nonPenCol = NULL,
@@ -893,12 +893,18 @@ OncoCast <- function(data,family,formula, method = c("ENET"),
         fit <- glmnet(x = as.matrix(train[,-match("y",colnames(train))]), y = train[,"y"],family = family,alpha=1)
 
         if(family == "gaussian"){
-          predicted <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min")
+          pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min")
+          predicted <- rep(NA,nrow(data))
+          names(predicted) <- rownames(data)
+          predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
           mse <- mean((test$y - predicted)^2)
         }
 
         if(family == "binomial"){
-          predicted <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type="class")
+          pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type="class")
+          predicted <- rep(NA,nrow(data))
+          names(predicted) <- rownames(data)
+          predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
           CI <- sum(as.numeric(predicted) == test$y) / nrow(test)
         }
         Coefficients <- coef(fit, s = cv.fit$lambda.min)
@@ -920,9 +926,80 @@ OncoCast <- function(data,family,formula, method = c("ENET"),
     }
 
 
+    ########## ENET #############
+    final.enet <- list()
+    if("ENET" %in% method) {
+      print("ENET SELECTED")
+      ENET <- foreach(run=1:runs) %dopar% {
+
+        ### BUILD TRAINING AND TESTING SET ###
+        set.seed(run)
+        cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"ENET_log.txt"), append=TRUE)
+        # split data
+        rm.samples <- sample(1:nrow(data), ceiling(nrow(data)*1/3),replace = FALSE)
+        train <- data[-rm.samples,]
+        test <- data[rm.samples,]
+
+        alphas <- seq(0,1,0.05)
+
+        allCV <- lapply(1:length(alphas),function(x){
+          cv.fit <- cv.glmnet(x = as.matrix(train[,-match("y",colnames(train))]), y = train[,"y"],family = family,
+                              nfolds = 5,alpha=alphas[x])
+          fit <- glmnet(x = as.matrix(train[,-match("y",colnames(train))]), y = train[,"y"],family = family,alpha=alphas[x])
+
+          if(family == "gaussian"){
+            pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min")
+            mse <- mean((test$y - pred)^2)
+            return(list("cv.fit"=cv.fit,"fit"=fit,"mse"=mse,"predicted"=pred))
+          }
+
+          if(family == "binomial"){
+            pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type="class")
+            CI <- sum(as.numeric(pred) == test$y) / nrow(test)
+            return(list("cv.fit"=cv.fit,"fit"=fit,"CI"=CI,"predicted"=pred))
+          }
+        })
+
+        if(family == "gaussian"){
+          best.run <- which.min(sapply(allCV,"[[","mse"))
+          cv.fit <- allCV[[best.run]]$cv.fit
+          fit <- allCV[[best.run]]$fit
+          mse <- allCV[[best.run]]$mse
+          # predicted <- allCV[[best.run]]$predicted
+        }
+
+        if(family == "binomial"){
+          best.run <- which.max(sapply(allCV,"[[","CI"))
+          cv.fit <- allCV[[best.run]]$cv.fit
+          fit <- allCV[[best.run]]$fit
+          CI <- allCV[[best.run]]$CI
+          # predicted <- allCV[[best.run]]$predicted
+        }
+
+        predicted <- rep(NA,nrow(data))
+        names(predicted) <- rownames(data)
+        predicted[match(rownames(allCV[[best.run]]$predicted),names(predicted))] <- as.numeric(allCV[[best.run]]$predicted)
+
+        Coefficients <- coef(fit, s = cv.fit$lambda.min)
+        coefs <- Coefficients[-1,1]
+
+        final.enet$formula <- formula
+        final.enet$fit <- coefs
+        final.enet$predicted <- predicted
+        # final.lasso$means <- lasso.fit$means --> need to think of how to do validation ...
+        final.enet$method <- "LASSO"
+        if(family == "binomial") final.enet$CI <- CI
+        if(family == "gaussian") final.enet$MSE <- MSE
+        final.enet$family <- family
+        return(final.enet)
+      }
+      if(save){
+        save(ENET,file = paste0(pathResults,"/",studyType,"_ENET.Rdata"))}
+
+    }
 
 
-    ########## LASSO #############
+    ########## GBM #############
     final.gbm <- list()
     if("GBM" %in% method) {
       print("GBM SELECTED")
@@ -930,7 +1007,7 @@ OncoCast <- function(data,family,formula, method = c("ENET"),
 
         ### BUILD TRAINING AND TESTING SET ###
         set.seed(run)
-        cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"LASSO_log.txt"), append=TRUE)
+        cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"GBM_log.txt"), append=TRUE)
         # split data
         rm.samples <- sample(1:nrow(data), ceiling(nrow(data)*1/3),replace = FALSE)
         train <- data[-rm.samples,]
