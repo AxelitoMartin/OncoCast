@@ -1051,6 +1051,100 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
     }
 
 
+    ##########
+    ### RF ###
+    ##########
+    if("RF" %in% method){
+      final.rf <- list()
+      print("RF SELECTED")
+      RF <- foreach(run=1:runs) %dopar% {
+
+        set.seed(run)
+        cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"RF_log.txt"), append=TRUE)
+
+        rm.samples <- sample(1:nrow(data), ceiling(nrow(data)*1/3),replace = FALSE)
+        train <- data[-rm.samples,]
+        test <- data[rm.samples,]
+
+
+        if(!is.null(max.depth)) rfGrid <- expand.grid(.mtry = mtry,
+                                                      .n.trees = nTree,
+                                                      .n.minobsinnode = rf.node,
+                                                      .sample.fraction = sample.fraction,
+                                                      .max.depth = max.depth)
+        else rfGrid <- expand.grid(.mtry = mtry,
+                                   .n.trees = nTree,
+                                   .n.minobsinnode = rf.node,
+                                   .sample.fraction = sample.fraction)
+
+        BestPerf <- apply(rfGrid,1,function(x){
+          set.seed(21071993)
+
+          if(!is.null(max.depth)) rf <- ranger(formula = y~., data = train, num.trees = x[2],replace = replace,
+                                               importance = "impurity",mtry = x[1],
+                                               min.node.size = x[3],
+                                               sample.fraction = x[4],
+                                               max.depth = x[5])
+          else rf <- ranger(formula = y~., data = train, num.trees = as.numeric(x[2]),replace = replace,
+                            importance = "impurity",mtry = as.numeric(x[1]),
+                            min.node.size = as.numeric(x[3]),
+                            sample.fraction = as.numeric(x[4]))
+
+          if(is.character(rf)){
+            if(family == "binomial")
+              return(list("CI"=NA,"infl"=NA,"predicted"=NA,
+                          "bestTreeForPrediction"=NA))
+            if(family == "gaussian")
+              return(list("MSE"=NA,"infl"=NA,"predicted"=NA,
+                          "bestTreeForPrediction"=NA))
+          }
+
+          if(family == "binomial"){
+            pred <- predict(object = rf, data = test,type = "response")$predictions
+            CI <- sum(round(as.numeric(pred)) == test$y) / nrow(test)
+            return(list("CI"=CI,"infl"=importance(rf),"pred"=pred,"rf"=rf))
+          }
+          if(family == "gaussian"){
+            pred <- predict(object = rf, data = test)$predictions
+            mse <- mean((test$y - pred)^2)
+            return(list("MSE"=MSE,"infl"=importance(rf),"pred"=pred,"rf"=rf))
+          }
+        })
+
+        if(family == "binomial"){
+          if(all(is.na((vapply(BestPerf,"[[","CI",FUN.VALUE = numeric(1)))))){return(NULL)}
+          index <- which.max(vapply(BestPerf,"[[","CI",FUN.VALUE = numeric(1)))
+          final.rf$CI <- BestPerf[[index]]$CI
+        }
+        if(family == "gaussian"){
+          if(all(is.na((vapply(BestPerf,"[[","MSE",FUN.VALUE = numeric(1)))))){return(NULL)}
+          index <- which.min(vapply(BestPerf,"[[","MSE",FUN.VALUE = numeric(1)))
+          final.rf$MSE <- BestPerf[[index]]$MSE
+        }
+
+        rf <- BestPerf[[index]]$rf
+        final.rf$method <- "RF"
+        final.rf$Vars <- importance(rf)
+
+        predicted <- rep(NA,nrow(data))
+        names(predicted) <- rownames(data)
+        if(family == "binomial") predicted[match(rownames(test),names(predicted))] <- predict(object = rf, data = test,type = "response")$predictions
+        if(family == "gaussian") predicted[match(rownames(test),names(predicted))] <- predict(object = rf, data = test)$predictions$predictions
+
+        final.rf$predicted <- predicted
+        final.rf$formula <- formula
+        final.rf$family <- family
+
+        if(rf_gbm.save){
+          final.rf$RF <- rf
+        }
+        return(final.rf)
+      }
+      if(save){save(RF,file = paste0(pathResults,"/",studyType,"_RF.Rdata"))
+        RF <- NULL}
+    }
+
+
     ########## GBM #############
     final.gbm <- list()
     if("GBM" %in% method) {
