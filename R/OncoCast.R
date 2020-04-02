@@ -897,7 +897,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
           predicted <- rep(NA,nrow(data))
           names(predicted) <- rownames(data)
           predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
-          mse <- mean((test$y - predicted)^2)
+          mse <- mean((test$y - pred)^2)
         }
 
         if(family == "binomial"){
@@ -905,7 +905,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
           predicted <- rep(NA,nrow(data))
           names(predicted) <- rownames(data)
           predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
-          CI <- sum(as.numeric(predicted) == test$y) / nrow(test)
+          CI <- sum(as.numeric(pred) == test$y) / nrow(test)
         }
         Coefficients <- coef(fit, s = cv.fit$lambda.min)
         coefs <- Coefficients[-1,1]
@@ -922,6 +922,58 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
       }
       if(save){
         save(LASSO,file = paste0(pathResults,"/",studyType,"_LASSO.Rdata"))}
+
+    }
+
+
+    ########## RIDGE #############
+    final.ridge <- list()
+    if("RIDGE" %in% method) {
+      print("RIDGE SELECTED")
+      RIDGE <- foreach(run=1:runs) %dopar% {
+
+        ### BUILD TRAINING AND TESTING SET ###
+        set.seed(run)
+        cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"RIDGE_log.txt"), append=TRUE)
+        # split data
+        rm.samples <- sample(1:nrow(data), ceiling(nrow(data)*1/3),replace = FALSE)
+        train <- data[-rm.samples,]
+        test <- data[rm.samples,]
+
+        cv.fit <- cv.glmnet(x = as.matrix(train[,-match("y",colnames(train))]), y = train[,"y"],family = family,
+                            nfolds = 5,alpha=0)
+        fit <- glmnet(x = as.matrix(train[,-match("y",colnames(train))]), y = train[,"y"],family = family,alpha=0)
+
+        if(family == "gaussian"){
+          pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min")
+          predicted <- rep(NA,nrow(data))
+          names(predicted) <- rownames(data)
+          predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
+          mse <- mean((test$y - pred)^2)
+        }
+
+        if(family == "binomial"){
+          pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type="class")
+          predicted <- rep(NA,nrow(data))
+          names(predicted) <- rownames(data)
+          predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
+          CI <- sum(as.numeric(pred) == test$y) / nrow(test)
+        }
+        Coefficients <- coef(fit, s = cv.fit$lambda.min)
+        coefs <- Coefficients[-1,1]
+
+        final.ridge$formula <- formula
+        final.ridge$fit <- coefs
+        final.ridge$predicted <- predicted
+        # final.ridge$means <- ridge.fit$means --> need to think of how to do validation ...
+        final.ridge$method <- "RIDGE"
+        if(family == "binomial") final.ridge$CI <- CI
+        if(family == "gaussian") final.ridge$MSE <- MSE
+        final.ridge$family <- family
+        return(final.ridge)
+      }
+      if(save){
+        save(RIDGE,file = paste0(pathResults,"/",studyType,"_RIDGE.Rdata"))}
 
     }
 
