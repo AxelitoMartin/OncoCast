@@ -605,7 +605,7 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
     }
 
-    if(method %in% c("GBM","RF","SVM","NN")) {
+    if(method %in% c("GBM","RF","SVM")) {
       #### Variables ####
       Variables <- colnames(data)[-1]
 
@@ -628,6 +628,13 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
       allCoefs <- mean.imp
       resultsAll <- NULL
+    }
+
+    if(method == "NN"){
+      allCoefs <- NULL
+      resultsAll <- NULL
+      topHits <- NULL
+      selectInflPlot <- NULL
     }
 
     final.pred <- sapply(OC_object,"[[","predicted")
@@ -686,7 +693,8 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     if(sum(uniques == 2) > 2){
       genes <- names(uniques[which(uniques == 2)])
       if(method %in% c("LASSO","RIDGE","ENET") ) keep <- names(sort(selectFreq[match(genes,names(selectFreq))],decreasing = T)[1:pmin(15,length(genes))])
-      if(method %in% c("GBM","RF","SVM","NN")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
+      if(method %in% c("GBM","RF","SVM")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
+      if(method == "NN") keep <- uni$Feature[order(uni$Pvalue)[1:15]]
 
       if(!is.null(geneList)){
         if(length(geneList) < 15){
@@ -707,8 +715,8 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     if(sum(uniques > 2) > 2){
       genes <- names(uniques[which(uniques > 2)])
       if(method %in% c("LASSO","RIDGE","ENET") ) keep <- names(sort(selectFreq[match(genes,names(selectFreq))],decreasing = T)[1:pmin(15,length(genes))])
-      if(method %in% c("GBM","RF","SVM","NN")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
-
+      if(method %in% c("GBM","RF","SVM")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
+      if(method == "NN") keep <- uni$Feature[order(uni$Pvalue)[1:15]]
       if(!is.null(geneList)){
         if(length(geneList) < 15){
           keep <- c(geneList,keep[-c((15-length(geneList)):15)])

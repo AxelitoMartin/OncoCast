@@ -857,6 +857,12 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
   }
 
 
+  #########################################################
+
+
+
+  #########################################################
+
   #################
   # binomial onco #
   #################
@@ -1230,6 +1236,81 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         GBM <- NULL}
     }
 
+
+
+    ##########
+    ### NN ###
+    ##########
+    if("NN" %in% method){
+      final.nn <- list()
+      print("NN SELECTED")
+
+      if(norm.nn){
+        rm <- 1
+        maxs <- apply(data[,-rm], 2, max)
+        mins <- apply(data[,-rm], 2, min)
+
+        data[,-rm] <- as.data.frame(scale(data[-rm], center = mins, scale = maxs - mins))
+        data.save = T
+      }
+      # data$y <- ifelse(data$y == 1, "Yes","No")
+
+      NN <- foreach(run=1:runs) %dopar% {
+
+        set.seed(run)
+        cat(paste("Run : ", run,"\n",sep=""), file=paste0(studyType,"NN_log.txt"), append=TRUE)
+
+        rm.samples <- sample(1:nrow(data), ceiling(nrow(data)*1/3),replace = FALSE)
+        train <- data[-rm.samples,]
+        test <- data[rm.samples,]
+
+        covs <- colnames(train)[-1]
+        if(family == "binomial")
+          f <- as.formula(paste("as.factor(y) ~", paste(covs[!covs %in% "y"], collapse = " + ")))
+
+        if(is.null(layers)){
+          n <- ncol(train) - 1
+          sub.layers <- round(c(n*4/5,n*3/4,n*2/3,n/2,n/3,n/4,n/5))}
+        else sub.layers <- layers
+        out <- lapply(sub.layers,function(x){
+
+          if(family == "binomial"){
+            nn <- neuralnet(f,data=train,hidden=x,linear.output=F)
+            pred <- predict(nn,test)
+
+            predicted <- rep(NA,nrow(data))
+            names(predicted) <- rownames(data)
+            predicted[match(rownames(test),names(predicted))] <- as.numeric(pred[,2])
+
+            CI <- sum(test$y == as.numeric(apply(pred,1,which.max))-1)
+            return(list(nnet=nn,CI=CI,predicted = predicted))
+          }
+        })
+        if(family == "binomial"){
+          index <- which.max(vapply(out, "[[", "CI", FUN.VALUE = numeric(1)))
+          nn <- out[[index]]$nnet
+          final.nn$CI <- out[[index]]$CI
+          final.nn$predicted <- out[[index]]$predicted
+        }
+
+        # Vars <- garson(nn)$data
+        # Vars <- Vars[match(colnames(train),Vars$x_names),]
+        # Vars <- Vars[complete.cases(Vars),1]
+        # names(Vars) <- colnames(train)[-match("y",colnames(train))]
+        # final.nn$Vars <- Vars
+        final.nn$formula <- formula
+        final.nn$method <- "NN"
+        final.nn$layer <- sub.layers[index]
+        final.nn$family <- family
+
+        if(rf_gbm.save) final.nn$NN <- nn
+
+        return(final.nn)
+      }
+
+      if(save){save(NN,file = paste0(pathResults,"/",studyType,"_NN.Rdata"))
+        NN <- NULL}
+    }
 
   }
 
