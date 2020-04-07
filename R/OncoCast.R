@@ -1282,7 +1282,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
             names(predicted) <- rownames(data)
             predicted[match(rownames(test),names(predicted))] <- as.numeric(pred[,2])
 
-            CI <- sum(test$y == as.numeric(apply(pred,1,which.max))-1)
+            CI <- sum(test$y == as.numeric(apply(pred,1,which.max))-1)/nrow(test)
             return(list(nnet=nn,CI=CI,predicted = predicted))
           }
         })
