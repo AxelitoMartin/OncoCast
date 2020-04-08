@@ -907,11 +907,14 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         }
 
         if(family == "binomial"){
-          pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type="class")
+          pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type = "response")
           predicted <- rep(NA,nrow(data))
           names(predicted) <- rownames(data)
           predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
-          CI <- sum(as.numeric(pred) == test$y) / nrow(test)
+
+          scores.class0 <- pred[which(test$y == 0)]
+          scores.class1 <- pred[which(test$y == 1)]
+          CI <- pr.curve(scores.class0 = scores.class1, scores.class1 = scores.class0, curve = F)$auc.integral
         }
         Coefficients <- coef(fit, s = cv.fit$lambda.min)
         coefs <- Coefficients[-1,1]
@@ -959,11 +962,14 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         }
 
         if(family == "binomial"){
-          pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type="class")
+          pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type = "response")
           predicted <- rep(NA,nrow(data))
           names(predicted) <- rownames(data)
           predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
-          CI <- sum(as.numeric(pred) == test$y) / nrow(test)
+
+          scores.class0 <- pred[which(test$y == 0)]
+          scores.class1 <- pred[which(test$y == 1)]
+          CI <- pr.curve(scores.class0 = scores.class1, scores.class1 = scores.class0, curve = F)$auc.integral
         }
         Coefficients <- coef(fit, s = cv.fit$lambda.min)
         coefs <- Coefficients[-1,1]
@@ -1012,8 +1018,14 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
           }
 
           if(family == "binomial"){
-            pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type="class")
-            CI <- sum(as.numeric(pred) == test$y) / nrow(test)
+            pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min",type = "response")
+            predicted <- rep(NA,nrow(data))
+            names(predicted) <- rownames(data)
+            predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
+
+            scores.class0 <- pred[which(test$y == 0)]
+            scores.class1 <- pred[which(test$y == 1)]
+            CI <- pr.curve(scores.class0 = scores.class1, scores.class1 = scores.class0, curve = F)$auc.integral
             return(list("cv.fit"=cv.fit,"fit"=fit,"CI"=CI,"predicted"=pred))
           }
         })
@@ -1046,7 +1058,13 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         final.enet$predicted <- predicted
         # final.lasso$means <- lasso.fit$means --> need to think of how to do validation ...
         final.enet$method <- "LASSO"
-        if(family == "binomial") final.enet$CI <- CI
+        if(family == "binomial") {
+          final.enet$CI <- CI
+          final.enet$TPR <- TPR
+          final.enet$TNR <- TNR
+          final.enet$PPV <- PPV
+          final.enet$NPV <- NPV
+        }
         if(family == "gaussian") final.enet$MSE <- MSE
         final.enet$family <- family
         return(final.enet)
@@ -1107,7 +1125,12 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
 
           if(family == "binomial"){
             pred <- predict(object = rf, data = test,type = "response")$predictions
-            CI <- sum(round(as.numeric(pred)) == test$y) / nrow(test)
+            names(predicted) <- rownames(data)
+            predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
+
+            scores.class0 <- pred[which(test$y == 0)]
+            scores.class1 <- pred[which(test$y == 1)]
+            CI <- pr.curve(scores.class0 = scores.class1, scores.class1 = scores.class0, curve = F)$auc.integral
             return(list("CI"=CI,"infl"=importance(rf),"pred"=pred,"rf"=rf))
           }
           if(family == "gaussian"){
@@ -1183,8 +1206,15 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
             }
 
             bestTreeForPrediction <- gbm.perf.noprint(GBM)
-            predicted<- predict(GBM,newdata=test,n.trees = bestTreeForPrediction,type="response")
-            CI <- sum(round(predicted) == test$y) / nrow(test)
+            pred <- predict(GBM,newdata=test,n.trees = bestTreeForPrediction,type="response")
+            names(pred) <- rownames(test)
+            predicted <- rep(NA,nrow(data))
+            names(predicted) <- rownames(data)
+            predicted[match(names(pred),names(predicted))] <- as.numeric(pred)
+
+            scores.class0 <- pred[which(test$y == 0)]
+            scores.class1 <- pred[which(test$y == 1)]
+            CI <- pr.curve(scores.class0 = scores.class1, scores.class1 = scores.class0, curve = F)$auc.integral
             return(list("CI"=CI,"infl"=relative.influence.noprint(GBM),"predicted"=predicted,
                         "bestTreeForPrediction"=bestTreeForPrediction,"GBM"=GBM))
           }
@@ -1200,11 +1230,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         final.gbm$method <- "GBM"
         final.gbm$Vars <- BestPerf[[index]]$infl
 
-        predicted <- rep(NA,nrow(data))
-        names(predicted) <- rownames(data)
-        predicted[match(rownames(test),names(predicted))] <- BestPerf[[index]]$predicted
-
-        final.gbm$predicted <- predicted
+        final.gbm$predicted <- BestPerf[[index]]$predicted
         final.gbm$bestTreeForPrediction <- BestPerf[[index]]$bestTreeForPrediction
         final.gbm$params <- gbmGrid[index,]
         final.gbm$formula <- formula
@@ -1276,14 +1302,17 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
 
           if(family == "binomial"){
             nn <- neuralnet(f,data=train,hidden=x,linear.output=F)
-            pred <- predict(nn,test)
-
+            pred <- predict(nn,test,type = "response")
+            names(pred) <- rownames(test)
             predicted <- rep(NA,nrow(data))
             names(predicted) <- rownames(data)
-            predicted[match(rownames(test),names(predicted))] <- as.numeric(pred[,2])
+            predicted[match(names(pred),names(predicted))] <- as.numeric(pred)
 
-            CI <- sum(test$y == as.numeric(apply(pred,1,which.max))-1)/nrow(test)
-            return(list(nnet=nn,CI=CI,predicted = predicted))
+            scores.class0 <- pred[which(test$y == 0)]
+            scores.class1 <- pred[which(test$y == 1)]
+            CI <- pr.curve(scores.class0 = scores.class1, scores.class1 = scores.class0, curve = F)$auc.integral
+
+            return(list(nnet=nn,CI=CI,predicted = predicted,PPV=PPV,NPV=NPV,TPR=TPR,TNR=TNR))
           }
         })
         if(family == "binomial"){
@@ -1291,6 +1320,10 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
           nn <- out[[index]]$nnet
           final.nn$CI <- out[[index]]$CI
           final.nn$predicted <- out[[index]]$predicted
+          final.nn$TPR <- out[[index]]$TPR
+          final.nn$TNR <- out[[index]]$TNR
+          final.nn$PPV <- out[[index]]$PPV
+          final.nn$NPV <- out[[index]]$NPV
         }
 
         # Vars <- garson(nn)$data

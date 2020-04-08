@@ -66,4 +66,5 @@ Depends:
     fastDummies,
     neuralnet,
     NeuralNetTools,
-    glmnet
+    glmnet,
+    PRROC

@@ -533,7 +533,7 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
     ConcordanceIndex <- as.data.frame(as.vector(unlist(vapply(OC_object, "[[", "CI",FUN.VALUE = numeric(1)))))
     summary.CI <- round(as.data.frame(c(quantile(ConcordanceIndex[,1],c(0.1,0.25,0.5,0.75,0.9),na.rm = T))),digits = 2)
-    colnames(summary.CI) <- "Concordance Index"
+    colnames(summary.CI) <- "Precision recall AUC"
     rownames(summary.CI) <- c("Lower 10%","1st Quarter","Median","3rd Quarter","Upper 10%")
     CI.BP <- as.data.frame(t(summary.CI))
 
