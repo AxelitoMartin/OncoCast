@@ -446,11 +446,11 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
     if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
                              surv.median.line = surv.median.line, risk.table = risk.table,
-                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab("Time (Months)") +
+                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
       labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
     if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
                              surv.median.line = surv.median.line, risk.table = risk.table,
-                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab("Time (Months)") +
+                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
       labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
 
 
