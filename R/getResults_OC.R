@@ -53,7 +53,7 @@
 
 
 
-getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plotQuant=1, plot.cuts = T,...){
+getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plotQuant=1, plot.cuts = T,timeType = "Months",...){
 
   OC_object <- Filter(Negate(is.null), OC_object)
   method <- OC_object[[1]]$method
@@ -113,7 +113,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
     LT = F
   }
 
-  return(outputSurv(OC_object,data,family,method,geneList,cuts,plotQuant,plot.cuts,mut.data,LT,...))
+  return(outputSurv(OC_object,data,family,method,geneList,cuts,plotQuant,plot.cuts,mut.data,LT,timeType,...))
 
 }
 
@@ -167,7 +167,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #'                        geneList="NULL",numGroups,cuts,mut.data=T)
 
 
-outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plotQuant=1,plot.cuts=T,mut.data=F,LT,...){
+outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plotQuant=1,plot.cuts=T,mut.data=F,LT,timeType,...){
 
   ### SURVIVAL ###
   OC_object <- Filter(Negate(is.null), OC_object)
@@ -176,6 +176,7 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
     risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
     x.start <- ifelse(is.null(args[['x.start']]),0,args[['x.start']])
+    break.time <- ifelse(is.null(args[['break.time']]),0,args[['break.time.by']])
 
     MD <- 12
 
@@ -432,22 +433,10 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     if(LT == TRUE) {
       fit0 <- coxph(Surv(time1,time2,status) ~ RiskGroup,data=data,
                     na.action=na.exclude)
-      if(max(data$time2) > 1000){
-        timeType = "Days"
-        intercept = 5*365}
-      else{
-        timeType = "Months"
-        intercept = 5*12}
     }
     if(LT == FALSE) {
       fit0 <- coxph(Surv(time,status) ~ RiskGroup,data=data,
                     na.action=na.exclude)
-      if(max(data$time) > 1000){
-        timeType = "Days"
-        intercept = 5*365}
-      else{
-        timeType = "Months"
-        intercept = 5*12}
     }
 
     log.test.pval <- as.vector(summary(fit0)[10][[1]])[3]
@@ -457,11 +446,11 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
     if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
                              surv.median.line = surv.median.line, risk.table = risk.table,
-                             data = data,xlim=c(x.start,limit),break.time.by = 6) + xlab("Time (Months)") +
+                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab("Time (Months)") +
       labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
     if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
                              surv.median.line = surv.median.line, risk.table = risk.table,
-                             data = data,xlim=c(x.start,limit),break.time.by = 6) + xlab("Time (Months)") +
+                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab("Time (Months)") +
       labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
 
 
