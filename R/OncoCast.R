@@ -1292,7 +1292,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
 
         covs <- colnames(train)[-1]
         if(family == "binomial")
-          f <- as.formula(paste("as.factor(y) ~", paste(covs[!covs %in% "y"], collapse = " + ")))
+          f <- as.formula(paste("y ~", paste(covs[!covs %in% "y"], collapse = " + ")))
 
         if(is.null(layers)){
           n <- ncol(train) - 1
@@ -1312,7 +1312,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
             scores.class1 <- pred[which(test$y == 1)]
             CI <- pr.curve(scores.class0 = scores.class1, scores.class1 = scores.class0, curve = F)$auc.integral
 
-            return(list(nnet=nn,CI=CI,predicted = predicted,PPV=PPV,NPV=NPV,TPR=TPR,TNR=TNR))
+            return(list(nnet=nn,CI=CI,predicted = predicted))
           }
         })
         if(family == "binomial"){
@@ -1320,10 +1320,6 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
           nn <- out[[index]]$nnet
           final.nn$CI <- out[[index]]$CI
           final.nn$predicted <- out[[index]]$predicted
-          final.nn$TPR <- out[[index]]$TPR
-          final.nn$TNR <- out[[index]]$TNR
-          final.nn$PPV <- out[[index]]$PPV
-          final.nn$NPV <- out[[index]]$NPV
         }
 
         # Vars <- garson(nn)$data
