@@ -1060,10 +1060,10 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         final.enet$method <- "LASSO"
         if(family == "binomial") {
           final.enet$CI <- CI
-          final.enet$TPR <- TPR
-          final.enet$TNR <- TNR
-          final.enet$PPV <- PPV
-          final.enet$NPV <- NPV
+          # final.enet$TPR <- TPR
+          # final.enet$TNR <- TNR
+          # final.enet$PPV <- PPV
+          # final.enet$NPV <- NPV
         }
         if(family == "gaussian") final.enet$MSE <- MSE
         final.enet$family <- family
