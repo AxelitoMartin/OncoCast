@@ -4,23 +4,48 @@
 \alias{OncoCast}
 \title{OncoCast}
 \usage{
-OncoCast(data, formula, method = c("ENET"), runs = 100, cores = 1,
-  pathResults = ".", studyType = "", save = T, nonPenCol = NULL,
-  nTree = 500, interactions = c(1, 2), shrinkage = c(0.001, 0.01),
-  min.node = c(10, 20), rf_gbm.save = F, out.ties = F,
-  cv.folds = 5)
+OncoCast(
+  data,
+  family = "cox",
+  formula,
+  method = c("ENET"),
+  runs = 100,
+  cores = 1,
+  pathResults = ".",
+  studyType = "",
+  save = T,
+  nonPenCol = NULL,
+  nTree = 500,
+  interactions = c(1, 2),
+  shrinkage = c(0.001, 0.01),
+  min.node = c(10, 20),
+  rf_gbm.save = F,
+  out.ties = F,
+  cv.folds = 5,
+  rf.node = 5,
+  mtry = floor(ncol(data)/3),
+  replace = T,
+  sample.fraction = 1,
+  max.depth = NULL,
+  epsilon.svm = seq(0, 0.2, 0.02),
+  cost.svm = 2^(2:9),
+  layers = NULL,
+  norm.nn = T
+)
 }
 \arguments{
 \item{data}{Data frame with variables as columns and patients as rows. Must have no missing data and should contain only the outcome and the predictors to be used.
 We recommend the time variables to use the month unit. Moreover note that these methods cannot handle categorical variables. Dummy binary variables must be created
 prior to input.}
 
+\item{family}{Name of the distribution of the outcome. Options are "cox", "binomial". Default is "cox".}
+
 \item{formula}{A formula with the names of the variables to be used in the data frame provided in the first argument.
-eg : Surv(time,status)~. (Note all the variable available will be used regardless of the right
+eg : Surv(time,status)~. for cox; y ~ . for binomial (Note all the variable available will be used regardless of the right
 side of the formula).}
 
 \item{method}{Character vector of the names of the method(s) to be used, options are : 1) LASSO ("LASSO") 2) Ridge ("RIDGE")
-3) Elastic Net ("ENET"), 4) Random Forest ("RF"), 5) Support vector machine ("SVM") 6) Boosted Forest ("GBM"). Note that GBM requires training in order to perform optimally. Arguments in that objectives are listed below.
+3) Elastic Net ("ENET"), 4) Random Forest ("RF"), 5) Support vector machine ("SVM") 6) Boosted Forest ("GBM") 7) Neural network ("NN"). Note that GBM requires training in order to perform optimally. Arguments in that objectives are listed below.
 Default is ENET.}
 
 \item{runs}{Number of cross validation iterations to be performed. Default is 100. We highly recommend performing at least 50.}
@@ -54,13 +79,32 @@ learning rate typically requires more trees. Default are c(0.001,0.01).}
 of the trees. Note that this is the actual number of observations, not the total
 weight. Beware that nodes must be small if n is small. Default are c(10,20).}
 
-\item{rf_gbm.save}{For RF and GBM only. In order to perform proper validation we must save the entire boosted forest. This will require more memory space to save.
-If you plan to perform validation set to TRUE. Defaults is FALSE.}
+\item{rf_gbm.save}{For RF, GBM, SVM and NN only. In order to perform proper validation we must save the entire fit. This will require more memory space to save.
+If you plan to perform validation set to TRUE. Default is FALSE.}
 
 \item{out.ties}{phcpe argument to calculate the concordance index. If out.ties is set to FALSE,
 pairs of observations tied on covariates will be used to calculate the CPE. Otherwise, they will not be used.}
 
 \item{cv.folds}{Number of internal cross-validations to be performed in GBM.}
+
+\item{rf.node}{The minimal size of terminal nodes for random forest. Default is 5 (recommended for regression trees).}
+
+\item{mtry}{Number of features to include in each tree (for random forest). Default is 1/3 of all features.}
+
+\item{replace}{Boolean to sample with or without replacement for the samples (for random forest). Default is T.}
+
+\item{sample.fraction}{Fraction of samples to be used in random forest (default is 1).}
+
+\item{max.depth}{Maximum of depth of trees to be grown. Default trees are grown as much as possible.}
+
+\item{epsilon.svm}{epsilon sequence for SVM. Default is seq(0,0.2,0.02)}
+
+\item{cost.svm}{cost sequence for SVM. Default is 2^(2:9)}
+
+\item{layers}{a vector input for neural network method, each entry representing the number of nodes to be used at the given hidden layer.
+The number of hidden layers is determined by the length of the vector. Default is NULL in which case a single hidden layer will be used with diverse neuron numbers (recommended).}
+
+\item{norm.nn}{Boolean value to decide if the data for the nerual network should be normalized. Default is true (recommended).}
 }
 \value{
 CI : For each iteration the concordance index of the generated model will be calculated on the testing set
@@ -88,8 +132,8 @@ including the predicted risk score at each cross validation for all the patients
 \examples{
 library(OncoCast)
 test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-method = "LASSO",runs = 50,
-save = F,nonPenCol = NULL,cores =2)
+method = "LASSO",runs = 30,
+save = FALSE,nonPenCol = NULL,cores =2)
 }
 \keyword{Selection,}
 \keyword{penalized}

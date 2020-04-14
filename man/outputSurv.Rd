@@ -4,26 +4,45 @@
 \alias{outputSurv}
 \title{outputSurv}
 \usage{
-outputSurv(OC_object, data, method, geneList = NULL, numGroups = 2,
-  cuts = 0.5, plotQuant = 1, mut.data = F, LT)
+outputSurv(
+  OC_object,
+  data,
+  family,
+  method,
+  geneList = NULL,
+  cuts = NULL,
+  plotQuant = 1,
+  plot.cuts = T,
+  mut.data = F,
+  LT,
+  timeType,
+  ...
+)
 }
 \arguments{
 \item{OC_object}{A list object outputed by the VariableSelection function.}
 
 \item{data}{A dataframe that corresponds to the data used to generate the OncoCast output.}
 
+\item{family}{A character value indicating which family was used for the OncoCast run}
+
 \item{method}{Method used to generate the OC_object (e.g.: "LASSO").}
 
 \item{geneList}{Optional argument enabling the user to use a particular list of features of interest.}
-
-\item{numGroups}{Integer argument for the number of groups to be made in stratified Kaplan-Meier
-plot. Recommend to note make groups smaller than 10 patients.}
 
 \item{cuts}{Vector argument of decimal numbers between 0 and 1 representing the quantiles where the groups will be formed.}
 
 \item{plotQuant}{Decimal number between 0 and 1, for the proportion of patients to be shown on the Kaplan-Meier plot.}
 
+\item{plot.cuts}{Boolean specifying the cuts made in the risk score should be plotted on the risk histogram}
+
 \item{mut.data}{Boolean indicating if the set of predictors are binary variables.}
+
+\item{LT}{Boolean indicating if the data is left truncated}
+
+\item{timeType}{Character value to be printed on the kaplan meier representing the time unit used}
+
+\item{...}{Futher arguments}
 }
 \value{
 ciSummary Summary of the distribution of the concordance index accross all runs.
@@ -58,15 +77,13 @@ one of the (or the one) objects returned from the different machine learning alg
 Only one such object can be inputted everytime in the outputSummary function.
 }
 \examples{
-library(OncoCast2)
 test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-family = "cox",method = c("LASSO"),runs = 50,
-sampling = "cv",save = F,nonPenCol = NULL,cores =2)
+family = "cox",method = c("LASSO"),runs = 30,
+save = FALSE,nonPenCol = NULL,cores =1)
 OC_object <- test$LASSO
 data <- survData
-numGroups <- 5
 cuts <- c(0.2,0.4,0.6,0.8)
-out.test <- outputSurv(OC_object,data,method="GBM",
-                       geneList="NULL",numGroups,cuts,mut.data=T)
+out.test <- outputSurv(OC_object,data,
+                       geneList=NULL,cuts,mut.data=TRUE)
 }
 \keyword{Results}

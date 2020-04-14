@@ -4,9 +4,25 @@
 \alias{gbm.perf.noprint}
 \title{gbm.perf.noprint}
 \usage{
-gbm.perf.noprint(object, plot.it = F, oobag.curve = FALSE,
-  overlay = TRUE, method)
+gbm.perf.noprint(
+  object,
+  plot.it = FALSE,
+  oobag.curve = FALSE,
+  overlay = TRUE,
+  method
+)
+}
+\arguments{
+\item{object}{a gbm fit object}
+
+\item{plot.it}{boolean to specify if optimal sequence should be printed}
+
+\item{oobag.curve}{boolean to specify if curve should be made from out of bag samples}
+
+\item{overlay}{boolean to specify if overlay should be applied}
+
+\item{method}{method of the gbm fit}
 }
 \description{
-gbm.perf.noprint
+Get optimal number of trees for prediction from gbm fit
 }

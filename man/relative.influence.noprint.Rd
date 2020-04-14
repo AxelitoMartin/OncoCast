@@ -2,11 +2,21 @@
 % Please edit documentation in R/gbmExtras.R
 \name{relative.influence.noprint}
 \alias{relative.influence.noprint}
-\title{relative.influence.noprint}
+\title{relative.influence.noprint
+Get relative influence from gbm fit}
 \usage{
-relative.influence.noprint(object, n.trees, scale. = FALSE,
-  sort. = FALSE)
+relative.influence.noprint(object, n.trees, scale. = FALSE, sort. = FALSE)
+}
+\arguments{
+\item{object}{a gbm fit object}
+
+\item{n.trees}{number of trees to be used}
+
+\item{scale.}{boolean specifying if importance should be scaled}
+
+\item{sort.}{boolean specifying if importance should be sorted}
 }
 \description{
 relative.influence.noprint
+Get relative influence from gbm fit
 }
