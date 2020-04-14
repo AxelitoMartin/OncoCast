@@ -1,7 +1,3 @@
-##################################################################
-##################### ONCOCAST RESULTS ###########################
-##################################################################
-
 #' getResults_OC
 #'
 #' This functions let's the user study the output of the OncoCast function. This function takes as input
@@ -9,8 +5,6 @@
 #' Only one such object can be inputted at a time in the getResults_OC function.
 #' @param OC_object A list object outputed by the OncoCast function.
 #' @param data A dataframe that corresponds to the data used to generate the OncoCast output.
-#' @param numGroups The number of groups to be made when stratifying by risk groups. Options are 2,3 and 4 (for now implementing
-#' broader version). Default is 2.
 #' @param cuts Numeric vector of the points in the distribution of risk scores where groups will be splitted. Needs to be of length
 #' numGroups - 1. eg : c(0.25,0.5,0.75) when numgroups is 4. Default is 0.5.
 #' @param geneList Optional character vector of features of potential higher interest. Default is NULL, which
@@ -19,6 +13,8 @@
 #' @param plotQuant A numeric entry between 0-1 that defines what proportion of patients will be represented on the Kaplan-Meier plot.
 #' Particularly useful when a lot of patients with long survival are censored. Default is 1 (all patients are plotted).
 #' @param plot.cuts Boolean specifying the cuts made in the risk score should be plotted on the risk histogram
+#' @param timeType Character value to be printed on the kaplan meier representing the time unit used
+#' @param ... Futher arguments
 #' @return CPE Summary of the distribution of the concordance probability estimate (see phcpe function) accross all runs. (Recommended)
 #' @return CI Summary of the distribution of the concordance index accross all runs. (Depreciated)
 #' @return inflPlot Bar plot of frequency of the 20 most selected features.
@@ -45,11 +41,21 @@
 #' @export
 #' @examples library(OncoCast)
 #' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-#' method = "LASSO",runs = 50,
-#' save = F,nonPenCol = NULL,cores =2)
+#' method = "LASSO",runs = 30,
+#' save = FALSE,nonPenCol = NULL,cores =1)
 #' results <- getResults_OC(OC_object=test$LASSO,data=survData,
-#' numGroups=5,cuts=c(0.2,0.4,0.6,0.8),
-#' geneList=NULL,mut.data=T)
+#' cuts=c(0.2,0.4,0.6,0.8),
+#' geneList=NULL,mut.data=TRUE)
+#' @import
+#' magrittr
+#' dtplyr
+#' ggplot2
+#' survminer
+#' reshape2
+#' scales
+#' pheatmap
+#' @importFrom plotly plot_ly layout toRGB add_ribbons
+#' @importFrom dplyr select filter mutate group_by rename summarise
 
 
 
@@ -131,14 +137,16 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #' Only one such object can be inputted everytime in the outputSummary function.
 #' @param OC_object A list object outputed by the VariableSelection function.
 #' @param data A dataframe that corresponds to the data used to generate the OncoCast output.
+#' @param family A character value indicating which family was used for the OncoCast run
 #' @param method Method used to generate the OC_object (e.g.: "LASSO").
 #' @param geneList Optional argument enabling the user to use a particular list of features of interest.
-#' @param numGroups Integer argument for the number of groups to be made in stratified Kaplan-Meier
-#' plot. Recommend to note make groups smaller than 10 patients.
 #' @param cuts Vector argument of decimal numbers between 0 and 1 representing the quantiles where the groups will be formed.
 #' @param plotQuant Decimal number between 0 and 1, for the proportion of patients to be shown on the Kaplan-Meier plot.
 #' @param plot.cuts Boolean specifying the cuts made in the risk score should be plotted on the risk histogram
 #' @param mut.data Boolean indicating if the set of predictors are binary variables.
+#' @param LT Boolean indicating if the data is left truncated
+#' @param timeType Character value to be printed on the kaplan meier representing the time unit used
+#' @param ... Futher arguments
 #' @return ciSummary Summary of the distribution of the concordance index accross all runs.
 #' @return inflPlot Bar plot of frequency of the 20 most selected features.
 #' @return topHits Character vector of the top 10 most selected features.
@@ -155,16 +163,25 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #' @return RiskScoreSummary Distribution summary of the average predicted risk score.
 #' @keywords Results
 #' @export
-#' @examples library(OncoCast2)
+#' @examples
 #' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-#' family = "cox",method = c("LASSO"),runs = 50,
-#' sampling = "cv",save = F,nonPenCol = NULL,cores =2)
+#' family = "cox",method = c("LASSO"),runs = 30,
+#' save = FALSE,nonPenCol = NULL,cores =1)
 #' OC_object <- test$LASSO
 #' data <- survData
-#' numGroups <- 5
 #' cuts <- c(0.2,0.4,0.6,0.8)
-#' out.test <- outputSurv(OC_object,data,method="GBM",
-#'                        geneList="NULL",numGroups,cuts,mut.data=T)
+#' out.test <- outputSurv(OC_object,data,
+#'                        geneList=NULL,cuts,mut.data=TRUE)
+#' @import
+#' magrittr
+#' dtplyr
+#' ggplot2
+#' survminer
+#' reshape2
+#' scales
+#' pheatmap
+#' @importFrom plotly plot_ly layout
+#' @importFrom dplyr select filter mutate group_by rename summarise
 
 
 outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plotQuant=1,plot.cuts=T,mut.data=F,LT,timeType,...){
@@ -531,11 +548,19 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
   if(family %in% c("binomial","gaussian")){
 
-    ConcordanceIndex <- as.data.frame(as.vector(unlist(vapply(OC_object, "[[", "CI",FUN.VALUE = numeric(1)))))
-    summary.CI <- round(as.data.frame(c(quantile(ConcordanceIndex[,1],c(0.1,0.25,0.5,0.75,0.9),na.rm = T))),digits = 2)
-    colnames(summary.CI) <- "Precision recall AUC"
-    rownames(summary.CI) <- c("Lower 10%","1st Quarter","Median","3rd Quarter","Upper 10%")
-    CI.BP <- as.data.frame(t(summary.CI))
+    if(family == "binomial"){
+      ConcordanceIndex <- as.data.frame(as.vector(unlist(vapply(OC_object, "[[", "CI",FUN.VALUE = numeric(1)))))
+      summary.CI <- round(as.data.frame(c(quantile(ConcordanceIndex[,1],c(0.1,0.25,0.5,0.75,0.9),na.rm = T))),digits = 2)
+      colnames(summary.CI) <- "Precision recall AUC"
+      rownames(summary.CI) <- c("Lower 10%","1st Quarter","Median","3rd Quarter","Upper 10%")
+      CI.BP <- as.data.frame(t(summary.CI))}
+
+    if(family == "gaussian"){
+      ConcordanceIndex <- as.data.frame(as.vector(unlist(vapply(OC_object, "[[", "MSE",FUN.VALUE = numeric(1)))))
+      summary.CI <- round(as.data.frame(c(quantile(ConcordanceIndex[,1],c(0.1,0.25,0.5,0.75,0.9),na.rm = T))),digits = 2)
+      colnames(summary.CI) <- "MSE"
+      rownames(summary.CI) <- c("Lower 10%","1st Quarter","Median","3rd Quarter","Upper 10%")
+      CI.BP <- as.data.frame(t(summary.CI))}
 
     if(method %in% c("LASSO","RIDGE","ENET")){
       allCoefs <- t(sapply(OC_object,"[[","fit"))
@@ -631,10 +656,14 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
       mean(as.numeric(x),na.rm = TRUE)
     })
     average.risk[which(is.na(average.risk))] <- NA
-    to <- c(0,10)
-    from <- range(average.risk, na.rm = TRUE, finite = TRUE)
-    RiskScore <- (as.numeric(average.risk)-from[1])/diff(from)*diff(to)+to[1]
-
+    if(family == "binomial"){
+      to <- c(0,10)
+      from <- range(average.risk, na.rm = TRUE, finite = TRUE)
+      RiskScore <- (as.numeric(average.risk)-from[1])/diff(from)*diff(to)+to[1]
+    }
+    if(family == "gaussian"){
+      RiskScore <- average.risk
+    }
     summary.RiskScore <- round(as.data.frame(c(quantile(RiskScore,c(0.1,0.25,0.33,0.5,0.66,0.75,0.9),na.rm = TRUE))),digits = 2)
     colnames(summary.RiskScore) <- "Risk Score"
     rownames(summary.RiskScore) <- c("Lower 10%","1st Quarter","1st Tertile","Median","2nd Tertile","3rd Quarter","Upper 10%")

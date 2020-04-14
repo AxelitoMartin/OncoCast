@@ -4,17 +4,31 @@
 \alias{validate}
 \title{validate}
 \usage{
-validate(OC_object, Results, in.data, formula, limit = NULL)
+validate(
+  OC_object,
+  Results,
+  in.data,
+  formula,
+  limit = NULL,
+  plot.cuts = T,
+  ...
+)
 }
 \arguments{
 \item{OC_object}{Output of the OncoCast function.}
 
+\item{Results}{A getResults_OC object that you wish to validate}
+
+\item{in.data}{New data set containing the information of the incoming patients. Should be a dataframe
+with patients as rows and features as columns.}
+
+\item{formula}{the formula to be used for validation}
+
 \item{limit}{Optional numerical argument to set a time limit on the KM plot}
 
-\item{Fits}{All fits from the OncoCast run.}
+\item{plot.cuts}{Boolean specifying if lines should be added to risk histogram to indicate where the cuts were performed}
 
-\item{new.data}{New data set containing the information of the incoming patients. Should be a dataframe
-with patients as rows and features as columns.}
+\item{...}{futher arguments}
 }
 \value{
 data.out : The data frame inputted in the function with an additional column giving the predicted risk
@@ -29,11 +43,11 @@ survival data.
 \examples{
 library(OncoCast)
 test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-method = "LASSO",runs = 50,
-save = F,nonPenCol = NULL,cores =2)
+method = "LASSO",runs = 30,
+save = FALSE,nonPenCol = NULL,cores =1)
 results <- getResults_OC(OC_object=test$LASSO,data=survData,
-numGroups=5,cuts=c(0.2,0.4,0.6,0.8),
-geneList="NULL",mut.data=T)
+cuts=c(0.2,0.4,0.6,0.8),
+geneList=NULL,mut.data=TRUE)
 new.data <- as.data.frame(matrix(rbinom(5*20,1,0.5),nrow=20,ncol = 5))
 colnames(new.data) <- c("ImpCov1","ImpCov2","ImpCov3","ImpCov4","Cov7")
 rownames(new.data) <- paste0("Incoming",1:20)

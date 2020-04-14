@@ -1,6 +1,14 @@
 #' gbm.perf.noprint
+#'
+#' Get optimal number of trees for prediction from gbm fit
+#' @param object a gbm fit object
+#' @param plot.it boolean to specify if optimal sequence should be printed
+#' @param oobag.curve boolean to specify if curve should be made from out of bag samples
+#' @param overlay boolean to specify if overlay should be applied
+#' @param method method of the gbm fit
+#'
 #' @export
-gbm.perf.noprint <- function (object, plot.it = F, oobag.curve = FALSE, overlay = TRUE,
+gbm.perf.noprint <- function (object, plot.it = FALSE, oobag.curve = FALSE, overlay = TRUE,
                               method)
 {
   if (missing(method)) {
@@ -16,6 +24,11 @@ environment(gbm.perf.noprint) <- asNamespace('gbm')
 #########################
 
 #' relative.influence.noprint
+#' Get relative influence from gbm fit
+#' @param object a gbm fit object
+#' @param n.trees number of trees to be used
+#' @param scale. boolean specifying if importance should be scaled
+#' @param sort. boolean specifying if importance should be sorted
 #' @export
 relative.influence.noprint <- function (object, n.trees, scale. = FALSE, sort. = FALSE)
 {

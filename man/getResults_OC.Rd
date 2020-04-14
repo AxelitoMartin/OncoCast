@@ -4,16 +4,22 @@
 \alias{getResults_OC}
 \title{getResults_OC}
 \usage{
-getResults_OC(OC_object, data, numGroups = 2, cuts = 0.5,
-  geneList = NULL, mut.data = F, plotQuant = 1)
+getResults_OC(
+  OC_object,
+  data,
+  cuts = NULL,
+  geneList = NULL,
+  mut.data = F,
+  plotQuant = 1,
+  plot.cuts = T,
+  timeType = "Months",
+  ...
+)
 }
 \arguments{
 \item{OC_object}{A list object outputed by the OncoCast function.}
 
 \item{data}{A dataframe that corresponds to the data used to generate the OncoCast output.}
-
-\item{numGroups}{The number of groups to be made when stratifying by risk groups. Options are 2,3 and 4 (for now implementing
-broader version). Default is 2.}
 
 \item{cuts}{Numeric vector of the points in the distribution of risk scores where groups will be splitted. Needs to be of length
 numGroups - 1. eg : c(0.25,0.5,0.75) when numgroups is 4. Default is 0.5.}
@@ -25,6 +31,12 @@ leads to using the 5 most frequently selected features.}
 
 \item{plotQuant}{A numeric entry between 0-1 that defines what proportion of patients will be represented on the Kaplan-Meier plot.
 Particularly useful when a lot of patients with long survival are censored. Default is 1 (all patients are plotted).}
+
+\item{plot.cuts}{Boolean specifying the cuts made in the risk score should be plotted on the risk histogram}
+
+\item{timeType}{Character value to be printed on the kaplan meier representing the time unit used}
+
+\item{...}{Futher arguments}
 }
 \value{
 CPE Summary of the distribution of the concordance probability estimate (see phcpe function) accross all runs. (Recommended)
@@ -76,10 +88,10 @@ Only one such object can be inputted at a time in the getResults_OC function.
 \examples{
 library(OncoCast)
 test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-method = "LASSO",runs = 50,
-save = F,nonPenCol = NULL,cores =2)
+method = "LASSO",runs = 30,
+save = FALSE,nonPenCol = NULL,cores =1)
 results <- getResults_OC(OC_object=test$LASSO,data=survData,
-numGroups=5,cuts=c(0.2,0.4,0.6,0.8),
-geneList=NULL,mut.data=T)
+cuts=c(0.2,0.4,0.6,0.8),
+geneList=NULL,mut.data=TRUE)
 }
 \keyword{Results}

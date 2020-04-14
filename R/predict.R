@@ -18,16 +18,26 @@
 #' @export
 #' @examples library(OncoCast)
 #' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-#' method = "LASSO",runs = 50,
-#' save = F,nonPenCol = NULL,cores =2)
+#' method = "LASSO",runs = 30,
+#' save = FALSE,nonPenCol = NULL,cores =1)
 #' results <- getResults_OC(OC_object=test$LASSO,data=survData,
-#' numGroups=5,cuts=c(0.2,0.4,0.6,0.8),
-#' geneList="NULL",mut.data=T)
+#' cuts=c(0.2,0.4,0.6,0.8),
+#' geneList=NULL,mut.data=TRUE)
 #' new.data <- as.data.frame(matrix(rbinom(5*20,1,0.5),nrow=20,ncol = 5))
 #' colnames(new.data) <- c("ImpCov1","ImpCov2","ImpCov3","ImpCov4","Cov7")
 #' rownames(new.data) <- paste0("Incoming",1:20)
 #' Incoming <- predIncomingSurv(test$LASSO,new.data=new.data,
 #' surv.print = c(5,10,15),riskRefit = results$RiskRefit)
+#' @import
+#' magrittr
+#' dtplyr
+#' ggplot2
+#' survminer
+#' reshape2
+#' scales
+#' pheatmap
+#' @importFrom plotly plot_ly layout toRGB add_ribbons
+#' @importFrom dplyr select filter mutate group_by rename summarise
 
 predIncomingSurv <- function(OC_object,new.data,surv.print= NULL,riskRefit){
 

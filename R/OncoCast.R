@@ -1,7 +1,3 @@
-####################################################################
-##################### ONCOCAST ANALYSIS  ###########################
-####################################################################
-
 #' OncoCast
 #'
 #' This functions let's the user select one or multiple statistical learning algorithms (penalized regression and generalized boosted regression).
@@ -20,10 +16,6 @@
 #'  3) Elastic Net ("ENET"), 4) Random Forest ("RF"), 5) Support vector machine ("SVM") 6) Boosted Forest ("GBM") 7) Neural network ("NN"). Note that GBM requires training in order to perform optimally. Arguments in that objectives are listed below.
 #'  Default is ENET.
 #' @param runs Number of cross validation iterations to be performed. Default is 100. We highly recommend performing at least 50.
-#'
-# #' @param sampling The method use for sampling, options are bootstrapping ("boot") and cross-validation ("cv").
-# #' Default is cross-validation.
-#'
 #' @param cores If you wish to run this function in parallel set the number of cores to be used to be greater than 1. Default is 1.
 #' CAUTION : Overloading your computer can lead to serious issues, please check how many cores are available on your machine
 #' before selecting an option!
@@ -71,8 +63,25 @@
 #' @export
 #' @examples library(OncoCast)
 #' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-#' method = "LASSO",runs = 50,
-#' save = F,nonPenCol = NULL,cores =2)
+#' method = "LASSO",runs = 30,
+#' save = FALSE,nonPenCol = NULL,cores =2)
+#' @import
+#' foreach
+#' parallel
+#' doParallel
+#' gbm
+#' survival
+#' fastDummies
+#' neuralnet
+#' NeuralNetTools
+#' glmnet
+#' PRROC
+#' CPE
+#' mlr
+#' ranger
+#' glmnet
+#' PRROC
+#' @importFrom penalized optL1 optL2 predict
 
 OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
                      runs = 100,cores = 1,
@@ -693,9 +702,9 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
             testSurv <- with(test,Surv(time1,time2,status))
             # test$y <- residuals(coxph(Surv(time1,time2,status)~1,data=test),type="martingale")
 
-            GBM <- try(gbm(y~.,data = temp,distribution = "gaussian",
-                           interaction.depth = x[1],n.trees=as.numeric(x[2]),shrinkage = x[3],n.minobsinnode = x[4],
-                           bag.fraction = 0.5,train.fraction = 1,cv.folds = 5,n.cores = 1),silent=T)
+            GBM <- try(withTimeout(gbm(y~.,data = temp,distribution = "gaussian",
+                                       interaction.depth = x[1],n.trees=as.numeric(x[2]),shrinkage = x[3],n.minobsinnode = x[4],
+                                       bag.fraction = 0.5,train.fraction = 1,cv.folds = 5,n.cores = 1),timeout = 500 ),silent=T)
 
             if(is.character(GBM)){
               return(list("CPE"=0,"CI"=0,"infl"=NA,"predicted"=NA,
@@ -925,7 +934,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         # final.lasso$means <- lasso.fit$means --> need to think of how to do validation ...
         final.lasso$method <- "LASSO"
         if(family == "binomial") final.lasso$CI <- CI
-        if(family == "gaussian") final.lasso$MSE <- MSE
+        if(family == "gaussian") final.lasso$MSE <- mse
         final.lasso$family <- family
         return(final.lasso)
       }
@@ -980,7 +989,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         # final.ridge$means <- ridge.fit$means --> need to think of how to do validation ...
         final.ridge$method <- "RIDGE"
         if(family == "binomial") final.ridge$CI <- CI
-        if(family == "gaussian") final.ridge$MSE <- MSE
+        if(family == "gaussian") final.ridge$MSE <- mse
         final.ridge$family <- family
         return(final.ridge)
       }
@@ -1013,6 +1022,9 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
 
           if(family == "gaussian"){
             pred <- predict(cv.fit,newx = as.matrix(test[,-match("y",colnames(test))]), s="lambda.min")
+            predicted <- rep(NA,nrow(data))
+            names(predicted) <- rownames(data)
+            predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
             mse <- mean((test$y - pred)^2)
             return(list("cv.fit"=cv.fit,"fit"=fit,"mse"=mse,"predicted"=pred))
           }
@@ -1065,7 +1077,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
           # final.enet$PPV <- PPV
           # final.enet$NPV <- NPV
         }
-        if(family == "gaussian") final.enet$MSE <- MSE
+        if(family == "gaussian") final.enet$MSE <- mse
         final.enet$family <- family
         return(final.enet)
       }
@@ -1125,8 +1137,6 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
 
           if(family == "binomial"){
             pred <- predict(object = rf, data = test,type = "response")$predictions
-            names(predicted) <- rownames(data)
-            predicted[match(rownames(pred),names(predicted))] <- as.numeric(pred)
 
             scores.class0 <- pred[which(test$y == 0)]
             scores.class1 <- pred[which(test$y == 1)]
@@ -1136,7 +1146,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
           if(family == "gaussian"){
             pred <- predict(object = rf, data = test)$predictions
             mse <- mean((test$y - pred)^2)
-            return(list("MSE"=MSE,"infl"=importance(rf),"pred"=pred,"rf"=rf))
+            return(list("MSE"=mse,"infl"=importance(rf),"pred"=pred,"rf"=rf))
           }
         })
 
@@ -1158,7 +1168,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         predicted <- rep(NA,nrow(data))
         names(predicted) <- rownames(data)
         if(family == "binomial") predicted[match(rownames(test),names(predicted))] <- predict(object = rf, data = test,type = "response")$predictions
-        if(family == "gaussian") predicted[match(rownames(test),names(predicted))] <- predict(object = rf, data = test)$predictions$predictions
+        if(family == "gaussian") predicted[match(rownames(test),names(predicted))] <- predict(object = rf, data = test)$predictions
 
         final.rf$predicted <- predicted
         final.rf$formula <- formula
@@ -1218,14 +1228,44 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
             return(list("CI"=CI,"infl"=relative.influence.noprint(GBM),"predicted"=predicted,
                         "bestTreeForPrediction"=bestTreeForPrediction,"GBM"=GBM))
           }
+
+          if(family == "gaussian"){
+            GBM <- try(withTimeout(gbm(y~.,data = train,distribution = "gaussian",
+                                       interaction.depth = x[1],n.trees=as.numeric(x[2]),shrinkage = x[3],n.minobsinnode = x[4],
+                                       bag.fraction = 0.5,train.fraction = 1,cv.folds = cv.folds,n.cores = 1),timeout = 500 ),silent=T)
+
+            if(is.character(GBM)){
+              return(list("MSE"=0,"infl"=NA,"predicted"=NA,
+                          "bestTreeForPrediction"=NA))
+            }
+
+            bestTreeForPrediction <- gbm.perf.noprint(GBM)
+            pred <- predict(GBM,newdata=test,n.trees = bestTreeForPrediction)
+            names(pred) <- rownames(test)
+            predicted <- rep(NA,nrow(data))
+            names(predicted) <- rownames(data)
+            predicted[match(names(pred),names(predicted))] <- as.numeric(pred)
+
+            MSE = mean(as.numeric((test$y - pred)^2))
+            # print(MSE)
+            return(list("MSE"=MSE,"infl"=relative.influence.noprint(GBM),"predicted"=predicted,
+                        "bestTreeForPrediction"=bestTreeForPrediction,"GBM"=GBM))
+          }
           gc()
         })
 
-        if(sum(vapply(BestPerf,"[[","CI",FUN.VALUE = numeric(1)),na.rm = T)==0){return(NULL)}
-        index <- which.max(vapply(BestPerf,"[[","CI",FUN.VALUE = numeric(1)))
-
-        CI <- BestPerf[[index]]$CI
-        final.gbm$CI <- CI
+        if(family == "binomial"){
+          if(sum(vapply(BestPerf,"[[","CI",FUN.VALUE = numeric(1)),na.rm = T)==0){return(NULL)}
+          index <- which.max(vapply(BestPerf,"[[","CI",FUN.VALUE = numeric(1)))
+          CI <- BestPerf[[index]]$CI
+          final.gbm$CI <- CI
+        }
+        if(family == "gaussian"){
+          if(sum(vapply(BestPerf,"[[","MSE",FUN.VALUE = numeric(1)),na.rm = T)==0){return(NULL)}
+          index <- which.max(vapply(BestPerf,"[[","MSE",FUN.VALUE = numeric(1)))
+          MSE <- BestPerf[[index]]$MSE
+          final.gbm$MSE <- MSE
+        }
 
         final.gbm$method <- "GBM"
         final.gbm$Vars <- BestPerf[[index]]$infl
@@ -1291,8 +1331,7 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
         test <- data[rm.samples,]
 
         covs <- colnames(train)[-1]
-        if(family == "binomial")
-          f <- as.formula(paste("y ~", paste(covs[!covs %in% "y"], collapse = " + ")))
+        f <- as.formula(paste("y ~", paste(covs[!covs %in% "y"], collapse = " + ")))
 
         if(is.null(layers)){
           n <- ncol(train) - 1
@@ -1314,14 +1353,34 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
 
             return(list(nnet=nn,CI=CI,predicted = predicted))
           }
+
+          if(family == "gaussian"){
+            nn <- neuralnet(f,data=train,hidden=x,linear.output=T)
+            pred <- predict(nn,test)
+            names(pred) <- rownames(test)
+            predicted <- rep(NA,nrow(data))
+            names(predicted) <- rownames(data)
+            predicted[match(names(pred),names(predicted))] <- as.numeric(pred)
+
+            MSE = mean((pred-test$y)^2)
+            return(list(nnet=nn,MSE=MSE,predicted = predicted))
+          }
+
         })
+
+
         if(family == "binomial"){
           index <- which.max(vapply(out, "[[", "CI", FUN.VALUE = numeric(1)))
           nn <- out[[index]]$nnet
           final.nn$CI <- out[[index]]$CI
           final.nn$predicted <- out[[index]]$predicted
         }
-
+        if(family == "gaussian"){
+          index <- which.max(vapply(out, "[[", "MSE", FUN.VALUE = numeric(1)))
+          nn <- out[[index]]$nnet
+          final.nn$MSE <- out[[index]]$MSE
+          final.nn$predicted <- out[[index]]$predicted
+        }
         # Vars <- garson(nn)$data
         # Vars <- Vars[match(colnames(train),Vars$x_names),]
         # Vars <- Vars[complete.cases(Vars),1]
