@@ -1,0 +1,119 @@
+starting worker pid=45952 on localhost:11954 at 15:40:08.552
+Loading required package: OncoCast
+Loading required package: glmnet
+Loading required package: Matrix
+Loaded glmnet 3.0-2
+
+Loading required package: PRROC
+Loading required package: survival
+Loading required package: penalized
+Welcome to penalized. For extended examples, see vignette("penalized").
+Loading required package: gbm
+Loaded gbm 2.1.5
+Loading required package: mlr
+Loading required package: ParamHelpers
+'mlr' is in maintenance mode since July 2019. Future development
+efforts will go into its successor 'mlr3' (<https://mlr3.mlr-org.com>).
+Loading required package: ranger
+Loading required package: neuralnet
+Loading required package: NeuralNetTools
+Loading required package: e1071
+
+Attaching package: ‘e1071’
+
+The following object is masked from ‘package:mlr’:
+
+    impute
+
+Loading required package: CPE
+Loading required package: rms
+Loading required package: Hmisc
+Loading required package: lattice
+Loading required package: Formula
+Loading required package: ggplot2
+
+Attaching package: ‘Hmisc’
+
+The following object is masked from ‘package:e1071’:
+
+    impute
+
+The following object is masked from ‘package:mlr’:
+
+    impute
+
+The following objects are masked from ‘package:base’:
+
+    format.pval, units
+
+Loading required package: SparseM
+
+Attaching package: ‘SparseM’
+
+The following object is masked from ‘package:base’:
+
+    backsolve
+
+Loading required package: R.utils
+Loading required package: R.oo
+Loading required package: R.methodsS3
+R.methodsS3 v1.8.0 (2020-02-14 07:10:20 UTC) successfully loaded. See ?R.methodsS3 for help.
+R.oo v1.23.0 successfully loaded. See ?R.oo for help.
+
+Attaching package: ‘R.oo’
+
+The following object is masked from ‘package:R.methodsS3’:
+
+    throw
+
+The following objects are masked from ‘package:methods’:
+
+    getClasses, getMethods
+
+The following objects are masked from ‘package:base’:
+
+    attach, detach, load, save
+
+R.utils v2.9.2 successfully loaded. See ?R.utils for help.
+
+Attaching package: ‘R.utils’
+
+The following object is masked from ‘package:rms’:
+
+    validate
+
+The following object is masked from ‘package:Hmisc’:
+
+    capitalize
+
+The following objects are masked from ‘package:mlr’:
+
+    resample, setThreshold
+
+The following object is masked from ‘package:ParamHelpers’:
+
+    isVector
+
+The following object is masked from ‘package:utils’:
+
+    timestamp
+
+The following objects are masked from ‘package:base’:
+
+    cat, commandArgs, getOption, inherits, isOpen, nullfile, parse,
+    warnings
+
+
+Attaching package: ‘OncoCast’
+
+The following object is masked from ‘package:R.utils’:
+
+    validate
+
+The following object is masked from ‘package:rms’:
+
+    validate
+
+loaded OncoCast and set parent environment
+Warning message:
+replacing previous import ‘penalized::basehaz’ by ‘survival::basehaz’ when loading ‘OncoCast’ 
