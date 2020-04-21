@@ -13,6 +13,9 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE,fig.width=9,fig.height=6,message=F,warning = F)
 load("../data/survData.rda")
 library(survival)
+library(dplyr)
+library(dtplyr)
+library(parallel)
 # library(OncoCast)
 ```
 
