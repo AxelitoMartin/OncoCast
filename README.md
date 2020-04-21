@@ -1,48 +1,49 @@
----
-output: github_document
----
-
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "man/figures/README-",
-  out.width = "100%"
-)
-```
 
 # `OncoCast` R package
 
 <!-- badges: start -->
-[![Travis build status](https://travis-ci.com/AxelitoMartin/OncoCast.svg?branch=development)](https://travis-ci.org/AxelitoMartin/OncoCast)
-[![Codecov test coverage](https://codecov.io/gh/AxelitoMartin/OncoCast/branch/development/graph/badge.svg)](https://codecov.io/gh/AxelitoMartin/OncoCast?branch=development)
+
+[![Travis build
+status](https://travis-ci.com/AxelitoMartin/OncoCast.svg?branch=development)](https://travis-ci.org/AxelitoMartin/OncoCast)
+[![Codecov test
+coverage](https://codecov.io/gh/AxelitoMartin/OncoCast/branch/development/graph/badge.svg)](https://codecov.io/gh/AxelitoMartin/OncoCast?branch=development)
 <!-- badges: end -->
 
-
-Ensemble learner for survival prediction and stratification with improved interface. Allows for multiple machine learning to be applied to a high-dimensional data set with survival outcome (including left-truncated data).
+Ensemble learner for survival prediction and stratification with
+improved interface. Allows for multiple machine learning to be applied
+to a high-dimensional data set with survival outcome (including
+left-truncated data).
 
 ## Installing `OncoCast`
 
-`OncoCast` has some dependencies that will be installed if they are not found in your library. When installing from github a prompt in the console may ask if you want to install the binaries for curl v4.0 instead of 3.3. There is no need to update it for the package to work properly.
+`OncoCast` has some dependencies that will be installed if they are not
+found in your library. When installing from github a prompt in the
+console may ask if you want to install the binaries for curl v4.0
+instead of 3.3. There is no need to update it for the package to work
+properly.
 
-```{r}
+``` r
 install.packages("devtools")
 devtools::install_github("AxelitoMartin/OncoCast",build_vignettes = T, build_manual=T)
 ```
+
 The vignette will need a minute to build when installing the package.
 
-## Using `OncoCast` 
+## Using `OncoCast`
 
-We recommend first time users to go through the tutorial which can be found using the command:
+We recommend first time users to go through the tutorial which can be
+found using the command:
 
-```{r}
+``` r
 browseVignettes("OncoCast")
 ```
-Once the package has been installed. This will open your default web browser, select HTML and the tutorial will appear.
+
+Once the package has been installed. This will open your default web
+browser, select HTML and the tutorial will appear.
 
 If you have the following error:
 
-```{r}
+``` r
 Error: Failed to install 'OncoCast' from GitHub:
 System command error, exit status: 1, stdout + stderr (last 10 lines):
 E> task 1 failed - "could not find function "Surv""
@@ -57,9 +58,10 @@ E> Error: Vignette re-building failed.
 E> Execution halted
 ```
 
-Please first install the package and then re-install it while building the vignette:
+Please first install the package and then re-install it while building
+the vignette:
 
-```{r}
+``` r
 devtools::install_github("AxelitoMartin/OncoCast")
 devtools::install_github("AxelitoMartin/OncoCast",build_vignettes = T, build_manual=T,force = T)
 browseVignettes("OncoCast")
