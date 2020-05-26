@@ -241,7 +241,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
 
   # if(numGroups == 2){riskGroup[is.na(riskGroup)] <- 1}
   in.data$RiskGroup <- riskGroup
-  in.data$RiskGroup <- factor(in.data$RiskGroup, levels = c(1:numGroups) )
+  in.data$RiskGroup <- factor(in.data$RiskGroup, levels = c(1:length(unique(in.data$RiskGroup))) )
   numGroups <- length(levels(in.data$RiskGroup))
 
   if(LT == TRUE) {
@@ -318,4 +318,3 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
   return(list("RiskHistogram.new"=RiskHistogram.new,"out.data"=in.data,"KM"=KM,"survTable"=survivalGroup))
 
 }
-
