@@ -242,7 +242,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
   # if(numGroups == 2){riskGroup[is.na(riskGroup)] <- 1}
   in.data$RiskGroup <- riskGroup
   in.data$RiskGroup <- factor(in.data$RiskGroup, levels = c(1:numGroups) )
-
+  numGroups <- length(levels(in.data$RiskGroup))
 
   if(LT == TRUE) {
     fit0 <- coxph(Surv(time1,time2,status) ~ RiskGroup,data=in.data,
