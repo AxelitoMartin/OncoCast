@@ -194,6 +194,7 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
     x.start <- ifelse(is.null(args[['x.start']]),0,args[['x.start']])
     break.time <- ifelse(is.null(args[['break.time']]),6,args[['break.time']])
+    palette <- ifelse(is.null(args[['palette']]),NULL,args[['palette']])
 
     MD <- 12
 
@@ -463,11 +464,11 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
     if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
                              surv.median.line = surv.median.line, risk.table = risk.table,
-                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+                             data = data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette) + xlab(paste0("Time (",timeType,")")) +
       labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
     if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
                              surv.median.line = surv.median.line, risk.table = risk.table,
-                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+                             data = data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette) + xlab(paste0("Time (",timeType,")")) +
       labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
 
 
