@@ -58,6 +58,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
   risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
   x.start <- ifelse(is.null(args[['x.start']]),0,args[['x.start']])
+  palette.print <- args[['palette.print']]
 
   OC_object <- Filter(Negate(is.null), OC_object)
   means.train <- sapply(OC_object,"[[","means")
@@ -273,12 +274,37 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
     if(!LT) limit <- as.numeric(max(in.data$time))
   }
 
-  if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
-                           data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
-    labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
-  if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
-                           data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
-    labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
+  # if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+  #                          data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
+  #   labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
+  # if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+  #                          data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
+  #   labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
+
+  if(LT) {
+    if(is.null(palette.print))
+      KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
+                       surv.median.line = surv.median.line, risk.table = risk.table,
+                       data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+        labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+    else
+      KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
+                       surv.median.line = surv.median.line, risk.table = risk.table,
+                       data = data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
+        labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+  }
+  if(!LT){
+    if(is.null(palette.print))
+      KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
+                       surv.median.line = surv.median.line, risk.table = risk.table,
+                       data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+        labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+    else
+      KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
+                       surv.median.line = surv.median.line, risk.table = risk.table,
+                       data = data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
+        labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+  }
 
 
   survivalGroup <- as.data.frame(matrix(nrow=numGroups,ncol=4))
