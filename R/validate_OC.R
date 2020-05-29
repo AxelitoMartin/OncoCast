@@ -58,6 +58,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
   risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
   x.start <- ifelse(is.null(args[['x.start']]),0,args[['x.start']])
+  break.time <- ifelse(is.null(args[['break.time']]),6,args[['break.time']])
   palette.print <- args[['palette.print']]
 
   OC_object <- Filter(Negate(is.null), OC_object)
