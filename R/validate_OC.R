@@ -286,24 +286,24 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
     if(is.null(palette.print))
       KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
                        surv.median.line = surv.median.line, risk.table = risk.table,
-                       data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+                       data = in.data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
         labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
     else
       KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
                        surv.median.line = surv.median.line, risk.table = risk.table,
-                       data = data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
+                       data = in.data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
         labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
   }
   if(!LT){
     if(is.null(palette.print))
       KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
                        surv.median.line = surv.median.line, risk.table = risk.table,
-                       data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+                       data = in.data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
         labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
     else
       KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
                        surv.median.line = surv.median.line, risk.table = risk.table,
-                       data = data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
+                       data = in.data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
         labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
   }
 
