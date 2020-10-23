@@ -131,7 +131,7 @@ including the predicted risk score at each cross validation for all the patients
 }
 \examples{
 library(OncoCast)
-test <- OncoCast(data=survData,formula = Surv(time,status)~.,
+test <- OncoCast(data=survData[1:100,],formula = Surv(time,status)~.,
 method = "LASSO",runs = 30,
 save = FALSE,nonPenCol = NULL,cores =2)
 }

@@ -40,10 +40,10 @@
 #' @keywords Results
 #' @export
 #' @examples library(OncoCast)
-#' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
+#' test <- OncoCast(data=survData[1:100,],formula = Surv(time,status)~.,
 #' method = "LASSO",runs = 30,
 #' save = FALSE,nonPenCol = NULL,cores =1)
-#' results <- getResults_OC(OC_object=test$LASSO,data=survData,
+#' results <- getResults_OC(OC_object=test$LASSO,data=survData[1:100,],
 #' cuts=c(0.2,0.4,0.6,0.8),
 #' geneList=NULL,mut.data=TRUE)
 #' @import
@@ -164,14 +164,14 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #' @keywords Results
 #' @export
 #' @examples
-#' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-#' family = "cox",method = c("LASSO"),runs = 30,
-#' save = FALSE,nonPenCol = NULL,cores =1)
+#' library(OncoCast)
+#' test <- OncoCast(data=survData[1:100,],formula = Surv(time,status)~.,
+#'                  family = "cox",method = c("LASSO"),runs = 30,
+#'                  save = FALSE,nonPenCol = NULL,cores =1)
 #' OC_object <- test$LASSO
-#' data <- survData
+#' data <- survData[1:100,]
 #' cuts <- c(0.2,0.4,0.6,0.8)
-#' out.test <- outputSurv(OC_object,data,
-#'                        geneList=NULL,cuts,mut.data=TRUE)
+#' out.test <- outputSurv(OC_object,data, family = "cox",method = "LASSO",cuts = cuts, LT = FALSE,timeType = "Months")
 #' @import
 #' magrittr
 #' dtplyr

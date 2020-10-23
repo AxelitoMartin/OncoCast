@@ -77,13 +77,13 @@ one of the (or the one) objects returned from the different machine learning alg
 Only one such object can be inputted everytime in the outputSummary function.
 }
 \examples{
-test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-family = "cox",method = c("LASSO"),runs = 30,
-save = FALSE,nonPenCol = NULL,cores =1)
+library(OncoCast)
+test <- OncoCast(data=survData[1:100,],formula = Surv(time,status)~.,
+                 family = "cox",method = c("LASSO"),runs = 30,
+                 save = FALSE,nonPenCol = NULL,cores =1)
 OC_object <- test$LASSO
-data <- survData
+data <- survData[1:100,]
 cuts <- c(0.2,0.4,0.6,0.8)
-out.test <- outputSurv(OC_object,data,
-                       geneList=NULL,cuts,mut.data=TRUE)
+out.test <- outputSurv(OC_object,data, family = "cox",method = "LASSO",cuts = cuts, LT = FALSE,timeType = "Months")
 }
 \keyword{Results}
