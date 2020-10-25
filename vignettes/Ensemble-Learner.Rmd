@@ -1,0 +1,131 @@
+---
+title: "Ensemble-Learner"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Ensemble-Learner}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r setup}
+library(OncoCast)
+```
+
+# OncoCast function
+
+`OncoCast()` is the core function of the `OncoCast` package, it enables to generate an ensemble learning model through cross-validation. Repeatedly splitting the data in a training set (containing 2/3 of the observations) and a test set (containing the remaining 1/3 of observations) and fitting the model chosen by the user on the training set. A each iteration this model will be used to predict the risk of samples of the test set. When all splits have been performed the function will return the set of the fits performed along with the predicted risk for each sample across all iterations. 
+
+Cross-validation can be performed via parallel processing in order to optimize computational time, suers can find the number of clusters available on their machine using `parallel::detectCores()`. Note that the machine may be overloaded if all cores available are used, we thus recommend requiring `parallel::detectCores()` - 2 when selecting the value for the `cores` argument in `OncoCast()`.
+
+
+# Methods available
+
+Multiple well known regression methods and machine learning algorithms are available to generate the ensemble leaning model. These can be run in any combination and all have set seeds when ran leading to reproducible results. An exhaustive list of the methods available is listed below:
+
+- `LASSO`: Standing for least absolute shrinkage and selection operator is a penalized regression method performing variable selection and regularization to produce an optimized prediction accuracy and interpretable results. This method is particularly efficient when the data is very sparse (mutational data is good example of such data).
+- `RIDGE`: A penalized regression method that generates a parsimonious model when the number of covariates exceeds the number of observations in a dataset. Note that it can also be used when high multicollinearity is present in the data.
+- `ENET`: Standing for elastic-net, is a penalized regression method that combines the properties of LASSO and RIDGE regression in order to create a model that is parsimonious, breaks multicollinearity and performs selection of predictors in order to maximize prediction accuracy (<b>recommended method</b>).
+- `RF`: Standing for random forest, is an ensemble learning method of decision trees for classification and regression. This method is computationally efficient and deals well with multicolinearity but tends to overfit and has less interpretable results than the methods mentioned above.
+- `GBM`: Standing for gradient boosting regression, is a machine learning method for regression and classification problems. It produces an ensemble prediction model from a set of weak prediction models. These are built in a stage-wise fashion, where each new fit incoporates weighting for poorly predicted observations in the previous fit. This is a powerful method in settings where the set of predictors largely surpasses the number of observations and show very high multicollinearity (<b>recommended method</b>). 
+- `SVM`: Standing for support vector machine, is a set of supervised learning models for regression analysis. SVM can perform a non-linear classification using kernels efficiently. It is one of the most robust prediction methods but lacks interpretability. 
+- `NN`: Standing for neural networks, is a circuits of artificial nodes connected by edges with varying weights representing the strength of the connection between two nodes. NN is a powerful adaptive predictive modeling method that can derive conclusions from a complex and seemingly unrelated set of data points.
+
+Which method should be selected should be based on the users goals. 
+If interpretability of the results to draw scientific conclusion is the primary aim the user should strongly consider the penalized regression methods (`LASSO`, `RIDGE` and `ENET`). These will return clear variable selection patterns which indicates the importance of variables, along with coefficient for each of these variables enabling the user to interpret the biological impact of a given feature in the broad context of all variables included in the model.
+
+If pure prediction accuracy and risk stratification of the data is the primary aim of the user black box methods (`RF`, `GBM`, `SVM`, `NN`) should be strongly considered. These methods are able to accurately predict the risk of observations in very high dimensional data with high multicolinearity and complex interactions between features. The main drawback of these methods is the lack of interpretabilty of the results as none of these methods will return coefficients for the variables of interest and variable importance is too complex to be estimated. 
+
+Finally the user should always consider the computational power that is available to them. Both computational time and memory should be taken in account when selecting a method. `LASSO`, `RIDGE` and `RF` are usually fast and require low memory. `ENET` and `GBM` are more time consuming but will also require relatively low memory, while having high prediction and relatively interpretable results (these are the recommended methods in most settings). If neither computational time or memory use are an issue (in the case where the user has access to a cluster for example) then `NN` and `SVM` can be used to obtained very strong predictive models.
+
+
+
+# Running OncoCast
+
+Once the user has selected a method that matches their goals and computational power, they must select the family of the outcome of interest throught the `family` argument in `OncoCast()`. This should reflected the `formula` used to perform the model, if the interest is survival prediction the formula should be of the form `Surv(time,status) ~ .`. Note that this input must be a formula with the outcome on the left and a dot on the right, separated by `~` (eg: `y ~ .`).
+
+
+Along with the number of cross-validation to be performed through the `runs` argument, recall that we split the data in 2/3 training and 1/3 testing but only the observations in test set will receive a risk prediction. Thus on average we expect each observation in the dataset to receive $1/3 \times $ runs predictions in the final ensemble learning model. We recommend using at least 50 cross-validations leading to an expected number of predictions around 16.
+
+More arguments are available for specific methods that are selected by the user, we set some sensible defaults for new users. Users more familiar with these methods may refer to `OncoCast()` for details on how to modify these default values.
+
+In the sections below we will show examples to run `OncoCast()` with the different families available using the internal dataset available (see [Reference](https://axelitomartin.github.io/OncoCast/reference/index.html) for information on these datasets.)
+
+## Suvival outcome
+
+`OncoCast` was originally developed in a cancer research setting with the prediction of survival outcomes for patients based on their genomic profile and the current version of the package's features are oriented with this goal in mind. 
+We show here how to generate an `OncoCast()` model from time to event data with the recommended methods `ENET` and `GBM` with the `survData` dataset (see the [data article](https://axelitomartin.github.io/OncoCast/articles/OncoCast-Data.html) for more information). We use here the arguments to each of these methods with their default settings (the values for those arguments that would be used if they are not specficied).
+
+```{r, eval = FALSE}
+onco_run <- OncoCast(data = survData, family = "cox", formula = Surv(time,status)~., method = c("ENET","GBM"),
+                     runs = 100, cores = 1, pathResults = ".",studyType = "example_run", save = FALSE,
+                     # arguments specific to ENET #
+                     cv.folds = 5, 
+                     # arguments specific to GBM #
+                     nTree = 500, interactions = c(1, 2), shrinkage = c(0.001, 0.01), min.node = c(10, 20)
+)
+```
+
+```{r, echo = FALSE}
+onco_run <- OncoCast(data = survData, family = "cox", formula = Surv(time,status)~., method = c("ENET","GBM"),
+                     runs = 1, cores = 1, pathResults = ".",studyType = "example_run", save = FALSE,
+                     # arguments specific to ENET #
+                     cv.folds = 5, 
+                     # arguments specific to GBM #
+                     nTree = 500, interactions = c(1, 2), shrinkage = c(0.001, 0.01), min.node = c(10, 20)
+)
+```
+
+The `onco_run` object contains all the information from the `OncoCast()` runs using the two methods specified in the form of a list of two objects, one for each of the methods with the objects in the list having corresponding names (eg: `onco_run$ENET`).
+Each of these contain common elements:
+
+- `CPE`: the concordance probability index of the training model on the testing set at each iteration
+- `method`: the name of the method used for that model
+- `formula`: the formula used for the run
+- `family`: the type of data used
+
+And a set of features unique to the method used, such as coefficients found for each variable in the training model or the variable importance at that iteration.
+
+```{r}
+str(onco_run$ENET[[1]])
+str(onco_run$GBM[[1]])
+```
+
+These complex objects can be used directly as inputs in the `getResults_OC()` function that will recognize what type of object they are based on the family and method used and will process this output appropriately to return comprehensible results (see [**Generating comprehensible results**](https://axelitomartin.github.io/OncoCast/articles/ERisk-Prediction.html) article for more information).
+
+
+## Binary outcome
+
+Similarly to the time to event data `OncoCast()` can be used to predict how likely an observation will succeed or fail when the outcome of interest is binary. We show here an example using the `binData` dataset, as in the survival outcome example the methods will share some common features and some features unique to the method in question.
+
+```{r, eval = FALSE}
+onco_run <- OncoCast(data = binData, family = "binomial", formula = y~., method = c("ENET","GBM"),
+                     runs = 100, cores = 1, pathResults = ".",studyType = "example_run", save = FALSE,
+                     # arguments specific to ENET #
+                     cv.folds = 5, 
+                     # arguments specific to GBM #
+                     nTree = 500, interactions = c(1, 2), shrinkage = c(0.001, 0.01), min.node = c(10, 20)
+)
+```
+
+## Gaussian outcome
+
+Finally `OncoCast()` can be used to predict the outcome of an observation when the outcome of interest is gaussian. We show here an example using the `normData` dataset, as in the survival outcome example the methods will share some common features and some features unique to the method in question.
+
+```{r, eval = FALSE}
+onco_run <- OncoCast(data = normData, family = "gaussian", formula = y~., method = c("ENET","GBM"),
+                     runs = 100, cores = 1, pathResults = ".",studyType = "example_run", save = FALSE,
+                     # arguments specific to ENET #
+                     cv.folds = 5, 
+                     # arguments specific to GBM #
+                     nTree = 500, interactions = c(1, 2), shrinkage = c(0.001, 0.01), min.node = c(10, 20)
+)
+```

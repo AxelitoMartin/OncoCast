@@ -1,0 +1,78 @@
+---
+title: "Risk-Prediction"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Risk-Prediction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r setup}
+library(OncoCast)
+```
+
+# Creating comprehensible results
+
+As shown in the [**Performing an ensemble learning run**](https://axelitomartin.github.io/OncoCast/articles/Ensemble-Learner.html) article the output of the `OncoCast()` function is a list of complex features for each of the cross-validation performed. We include in the `OncoCast` package the `getResults_OC()` function to let users summarise and explore the results of the ensemble model of interest.
+
+For any given method used this function will return a summary of the averaged predicted risk score of observations in the dataset, a summary prognostic power of the model generated, a summary of the variable importance and a comprehensible stratification of the data into risk groups.
+
+In this article we will be considering the following model:
+
+
+Note that regardless of the method selected in `OncoCast()` the results presented below will be constructed in a similar fashion. 
+
+```{r}
+onco_run <- OncoCast(data = survData, family = "cox", formula = Surv(time,status)~., method = c("LASSO"),
+                     runs = 50, cores = 1, save = FALSE
+)
+```
+
+In the rest of this article we will be studying the output of the `getResults_OC()` function which takes as input the output of `OncoCast()` (here `onco_run$LASSO`) and the data used to perform the ensemble learning model:
+
+```{r}
+results <- getResults_OC(OC_object = onco_run$LASSO, data = survData)
+```
+
+# Predicted risk score
+
+After performing a given number of cross-validations `OncoCast()` returns a list of predicted risk values for all the observations that fell in the test set at each given iteration. For each observation we can average these predicted values in order to get a <b>average predicted risk score</b>. This score is the key component that will be used for stratification. Due to how the method is built this score is a surrogate predictor of the aggregated effect of all variables included as covariates in the model and we expect it to be a highly significant predictor of the outcome of interest. 
+
+`getResults_OC()` will return the raw averaged predicted risk of all samples:
+
+```{r}
+summary(results$risk.raw)
+```
+
+However in order to create a more comprehensible scoring system we rescale this vector to be between 0 and 10. Where 0 is the minimal risk found in the dataset and 10 is the maximum risk, leading to more intuitive interpretation of risk score comparison.
+
+```{r}
+summary(results$scaled.risk)
+```
+
+To get a better sense of the distribution of the predicted risk score, a histogram is returned along with the risk values:
+
+```{r}
+results$RiskHistogram
+```
+
+The blue vertical segment represent the risk groups generated for risk stratification of the cohort of interest. We will cover this in the `Resulting Stratification` section below.
+
+# Prognostic power
+
+A result of importance 
+
+# Variable importance
+
+# Resulting Stratification
+
+

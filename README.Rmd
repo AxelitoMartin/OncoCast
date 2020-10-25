@@ -19,7 +19,10 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 
-Ensemble learner for survival prediction and stratification with improved interface. Allows for multiple machine learning to be applied to a high-dimensional data set with survival outcome (including left-truncated data).
+## An Ensemble Learning Approach for Outcome Prediction in Precision Oncology Setting
+
+Ensemble learner framework for survival outcome prediction and stratification for high dimension data. Originally developed for cancer genomics with delayed entry in the risk set in mind, and thus can adjust for left-truncation. 
+OncoCast enables users to easily perform one or multiple machine learning survival analyses at once and explore and visualize the resulting output.
 
 ## Installing `OncoCast`
 
@@ -27,40 +30,24 @@ Ensemble learner for survival prediction and stratification with improved interf
 
 ``` r
 install.packages("devtools")
-devtools::install_github("AxelitoMartin/OncoCast",build_vignettes = T, build_manual=T)
+devtools::install_github("AxelitoMartin/OncoCast")
 ```
-The vignette will need a minute to build when installing the package.
+If you wish to use the development version of the package please use:
+
+``` r
+devtools::install_github("AxelitoMartin/OncoCast", ref = "development")
+```
 
 ## Using `OncoCast` 
 
-We recommend first time users to go through the tutorial which can be found using the command:
+We recommend users to walk through the companion website to this package before their first use of the method. They will be guided through:
 
-``` r
-browseVignettes("OncoCast")
-```
-Once the package has been installed. This will open your default web browser, select HTML and the tutorial will appear.
+- [**Generating data in a ready for analysis format**](https://axelitomartin.github.io/OncoCast/articles/OncoCast-Data.html) where the users will be guided on how to format their data to use `OncoCast`.
+- [**Performing an ensemble learning run**](https://axelitomartin.github.io/OncoCast/articles/Ensemble-Learner.html) through a guide of the different machine learning algorithms available and how to create an ensemble model.
+- [**Generating comprehensible results**](https://axelitomartin.github.io/OncoCast/articles/Risk-Prediction.html) with a tutorial on how to explore the predicted risk score of patients in the dataset, the prognostic power of the ensemble model, the importance of each feature of interest and how to optimize creation of risk groups in clinically meaningful subsets.
+- [**Using web-based interactive applications**](https://axelitomartin.github.io/OncoCast/articles/Online-Tools.html) to simplify the exploration of results and sharing them collaborators.
 
-If you have the following error:
 
-``` r
-Error: Failed to install 'OncoCast' from GitHub:
-System command error, exit status: 1, stdout + stderr (last 10 lines):
-E> task 1 failed - "could not find function "Surv""
-E> --- failed re-building 'OncoCast_vignette.Rmd'
-E>
-E> Warning in file.remove(f) :
-E>   cannot remove file '_OncoCast_log.txt', reason 'Permission denied'
-E> SUMMARY: processing the following file failed:
-E>   'OncoCast_vignette.Rmd'
-E>
-E> Error: Vignette re-building failed.
-E> Execution halted
-```
+## `OncoCast` Online
 
-Please first install the package and then re-install it while building the vignette:
-
-``` r
-devtools::install_github("AxelitoMartin/OncoCast")
-devtools::install_github("AxelitoMartin/OncoCast",build_vignettes = T, build_manual=T,force = T)
-browseVignettes("OncoCast")
-```
+There exist a version of OncoCast completely web-based requiring no coding skills and minimal inputs to create and explore an ensemble model. It can be found through this [online app](). The user will only be asked to input the dataset they wish to study and the method they want to use to create the emsemble model.

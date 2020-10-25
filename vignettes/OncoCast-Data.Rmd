@@ -1,0 +1,94 @@
+---
+title: "OncoCast-Data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{OncoCast-Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+collapse = TRUE,
+comment = "#>",
+message = FALSE,
+warning = FALSE
+)
+```
+
+```{r setup}
+library(OncoCast)
+library(dplyr)
+library(knitr)
+```
+
+
+# Data format
+
+`OncoCast()` expects as input a dataframe with samples (or patients) as rows and features of interest as columns. Each row name must correspond to a unique sample ID unique to the obsservation of interest. Similarly each column name must be unique to the feature it represents. 
+
+Several example datasets are included in the package and will be loaded with the package. These are `survData`, `survData.LT`, `binData` and `normData`. If you have a doubt on what the input data should look like please refer to these tables. As you can see in the code below these are stored as dataframes.
+
+```{r}
+typeof(survData)
+is.data.frame(survData)
+```
+
+
+# Outcome of interest
+
+`OncoCast()` can handle (at the time being) 3 different common outcomes:
+
+- Time to event data, which was the original target of the `OncoCast` package and most of the features present in this software are oriented with this outcome as the primary target. 
+
+```{r}
+kable(survData[1:5,1:5])
+```
+
+- Binary data, for outcomes that are based on success and failures.
+
+```{r}
+kable(binData[1:5,1:5])
+```
+
+- Normal data, for outcomes that follow a gaussian distribution.
+
+```{r}
+kable(normData[1:5,1:5])
+```
+
+# Features coding
+
+The `OncoCast()` function will consider that all features that are not part of the outcome are covariates (independent variables) and thus will be included in the ensemble model as predictors. 
+Due to machine learning algorithm restrictions only numeric predictors can be considered. For continuous and binary predictors this will not be an issue. However for dichotomous variables with more than 2 levels we require the creation of "dummy" binary variables for each level of a character vector (expect one level that is left out).
+A warning will be thrown if such a variable is recognized and recoded by `OncoCast()` as shown in the example below. We recommend the user does this prior to creating the ensemble learning model in order to control which factor becomes the baseline.
+
+```{r, echo = FALSE}
+library(fastDummies)
+library(dplyr)
+```
+
+```{r}
+data <- as.data.frame(matrix(c("a","b","c","x","y","z"), nrow = 3, ncol = 2))
+
+dums <- apply(data,2,function(x){anyNA(as.numeric(as.character(x)))})
+data.save = F
+if(sum(dums) > 0){
+  tmp <- data %>%
+    select(which(dums)) %>%
+    fastDummies::dummy_cols(remove_first_dummy = T) %>%
+    select(-one_of(names(which(dums))))
+  data <- as.data.frame(cbind(
+    data %>% select(-one_of(names(which(dums)))),
+    tmp
+  ) %>% mutate_all(as.character) %>%
+    mutate_all(as.numeric)
+  )
+  data.save = T
+  warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
+}
+
+kable(data, row.names = TRUE)
+```
+
+Note that a warning is thrown and the modified data will be saved and returned with the ensemble model.
