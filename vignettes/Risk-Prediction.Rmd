@@ -217,3 +217,38 @@ kable(head(validation$out.data %>%
 
 
 # Individual prediction
+
+It may also be of interest for clinicians estimate the survival time of individual patients, as this is an information that is both relevant for treatment assignment and is of critical interest to the patient themselves. Moreover it may be a research question for the users to study the patterns that lead to particularly favorable or unfavorable prognostics. We thus included in `OncoCast` the `predIncomingSurv()` function that allows for the individual survival prediction for a limited set of patients. Once again the ensemble learning model will be applied to generate a predicted survival curve for the patients in question. 
+We below an example of an incoming cohort of 20 patients where we are studying the predicted survival of patients 5, 10, and 15.
+
+```{r}
+new.data <- as.data.frame(matrix(rbinom(5*20,1,0.5),nrow=20,ncol = 5))
+colnames(new.data) <- c("ImpCov1","ImpCov2","ImpCov3","ImpCov4","Cov7")
+rownames(new.data) <- paste0("Incoming",1:20)
+kable(new.data[c(5,10,15),], row.names = TRUE)
+```
+
+```{r}
+Incoming <- predIncomingSurv(OC_object = onco_run$LASSO,new.data=new.data,
+                             surv.print = c(5,10,15),
+                             riskRefit = results$RiskRefit)
+```
+
+`Incoming` is once again a list containing summary information for the predicted survival of those patients through an interactive survival curves plot:
+
+```{r}
+Incoming$IncKM
+```
+
+We also include a table summarizing the estimated survival probability at different times points:
+
+```{r}
+kable(head(Incoming$survivalEst))
+```
+
+As in the `validate()` function we also return here the data used in the prediction and we add the predicted risk score of all the patients in the inputted dataset:
+
+```{r}
+kable(Incoming$data.out %>% 
+        select(OncoCastRiskScore))
+```
