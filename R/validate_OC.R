@@ -8,9 +8,11 @@
 #' @param in.data New data set containing the information of the incoming patients. Should be a dataframe
 #' with patients as rows and features as columns.
 #' @param formula the formula to be used for validation
+#' @param out.ties phcpe argument to calculate the concordance index. If out.ties is set to FALSE,
+#' pairs of observations tied on covariates will be used to calculate the CPE. Otherwise, they will not be used.
 #' @param limit Optional numerical argument to set a time limit on the KM plot
 #' @param plot.cuts Boolean specifying if lines should be added to risk histogram to indicate where the cuts were performed
-#' @param ... futher arguments
+#' @param ... futher arguments applicable in ggsurvplot
 #' @return data.out : The data frame inputted in the function with an additional column giving the predicted risk
 #' score of the incoming patients.
 #' @return RiskHist : A histogram of the distribution of the risk scores of patients in the given dataset.
@@ -52,7 +54,7 @@
 
 
 
-validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = T,...){
+validate <- function(OC_object,Results,in.data,formula, out.ties=FALSE,limit = NULL,plot.cuts = TRUE,...){
 
   args <- list(...)
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
@@ -183,6 +185,12 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
     }
   }
 
+  # Get CPE of validation #
+  CPE <- unlist(lapply(all.pred, function(pred_risk){
+    temp_formula <- formula(paste0(formula[[2]][1],"(", paste0(formula[[2]][-1],collapse = ","),")","~ pred_risk" ))
+    paste0(formula[[2]], "~ pred_risk")
+    CPE <- as.numeric(phcpe(coxph(temp_formula, data = in.data),out.ties=out.ties ))
+  }))
 
   ### PUTTING THINGS TOGETHER ####
   all.pred <- do.call("cbind",all.pred)
@@ -342,6 +350,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
                  color = "blue", linetype = "dashed")
   }
 
-  return(list("RiskHistogram.new"=RiskHistogram.new,"out.data"=in.data,"KM"=KM,"survTable"=survivalGroup))
+  return(list("CPE"=CPE,"RiskHistogram.new"=RiskHistogram.new,
+              "out.data"=in.data,"KM"=KM,"survTable"=survivalGroup))
 
 }

@@ -312,6 +312,8 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     meanRS <- mean(RiskScore)
     if(LT) refit.risk <- coxph(Surv(data$time1,data$time2,data$status)~RiskScore)
     if(!LT) refit.risk <- coxph(Surv(data$time,data$status)~RiskScore)
+    refit.risk_table <- as.data.frame(summary(refit.risk)$coefficients) %>%
+      rename(Coefficient = coef, HazardRatio = `exp(coef)`, SE = `se(coef)`, Z = z, Pvalue = `Pr(>|z|)`)
     Risk <- as.data.frame(RiskScore)
 
     RiskHistogram <- ggplot(Risk, aes(x = RiskScore, y = ..density..)) +
@@ -550,9 +552,9 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
         geom_vline(xintercept = as.numeric(quantile(RiskScore, cuts)),
                    color = "blue", linetype = "dashed")
     }
-    return(list("CPE"=CPE,"CI" = CI.BP,"risk.raw"=average.risk,"scaled.risk"=RiskScore,
+    return(list("CPE"=CPE,"risk.raw"=average.risk,"scaled.risk"=RiskScore, # "CI" = CI.BP,
                 "RiskHistogram"=RiskHistogram,"RiskScoreSummary"=as.data.frame(t(summary.RiskScore)),
-                "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts), "cuts" = cuts,
+                "RiskRefit"=refit.risk, "RiskRefitTable" = refit.risk_table,"rawCuts"= as.numeric(qts), "cuts" = cuts,
                 "uniVolcano"=uniVolcano,"topHits" = topHits,
                 "selectInflPlot" = selectInflPlot,"Fits"=allCoefs,
                 "heatmap.sorted.bin"=heatmap.sorted.bin,"heatmap.sorted.cont"=heatmap.sorted.cont,

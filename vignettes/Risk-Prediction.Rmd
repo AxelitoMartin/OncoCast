@@ -18,6 +18,10 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(OncoCast)
+library(ggplot2)
+library(ggrepel)
+library(knitr)
+library(dplyr)
 ```
 
 # Creating comprehensible results
@@ -43,7 +47,7 @@ In the rest of this article we will be studying the output of the `getResults_OC
 results <- getResults_OC(OC_object = onco_run$LASSO, data = survData)
 ```
 
-# Predicted risk score
+## Predicted risk score
 
 After performing a given number of cross-validations `OncoCast()` returns a list of predicted risk values for all the observations that fell in the test set at each given iteration. For each observation we can average these predicted values in order to get a <b>average predicted risk score</b>. This score is the key component that will be used for stratification. Due to how the method is built this score is a surrogate predictor of the aggregated effect of all variables included as covariates in the model and we expect it to be a highly significant predictor of the outcome of interest. 
 
@@ -56,7 +60,7 @@ summary(results$risk.raw)
 However in order to create a more comprehensible scoring system we rescale this vector to be between 0 and 10. Where 0 is the minimal risk found in the dataset and 10 is the maximum risk, leading to more intuitive interpretation of risk score comparison.
 
 ```{r}
-summary(results$scaled.risk)
+kable(results$RiskScoreSummary)
 ```
 
 To get a better sense of the distribution of the predicted risk score, a histogram is returned along with the risk values:
@@ -67,12 +71,149 @@ results$RiskHistogram
 
 The blue vertical segment represent the risk groups generated for risk stratification of the cohort of interest. We will cover this in the `Resulting Stratification` section below.
 
-# Prognostic power
+## Prognostic power
 
-A result of importance 
+The primary goal of `OncoCast` being to optimize the prediction of the outcome of the dataset of interest it is of critical to importance to ensure that the average predicted risk score generated is a strong predictor of the outcome. To explore this we use the concordance probability estimate that is recorded at each iteration. This estimate between 0 and 1 shows how likely the predicted risk of an observation is to match the observed one in the test set. We return in `getResults_OC()` a summary of this estimate's distribution across all iterations of the ensemble learner.
 
-# Variable importance
+```{r}
+kable(results$CPE)
+```
 
-# Resulting Stratification
+Similarly we can use the average predicted risk score as a predictor of the survival outcome of observations in our dataset. We do this through a simple Cox's proportional hazard model:
+
+```{r}
+kable(results$RiskRefitTable)
+```
+
+In this example we see that the risk score is a very significant predictor of survival. This is the expected result as it is built to be an aggregate measure of the effect of the combination of all covariates in the model.
+
+## Variable importance
+
+In a clinical research setting there is a pronounced interest in understanding the underlying biology predicted by the ensemble model. In order to explore the effect of features when adjusted for all the other covariates included we include summary plots of the variable importance. This is particularly convenient in the penalized regression methods `LASSO`, `RIDGE` and `ENET` as we can use the averaged coefficient found and how often the coefficient was different than zero to create an interactive volcano plot summarizing these findings across all iterations. In the plot below the color of point corresponds to it's mean coefficent value and the size of the point represents the event frequency of that feature in the data (in the case of binary predictors).
+
+```{r}
+results$selectInflPlot
+```
+
+Note that the data used to create this plot is returned by the `getResults_OC()` function if the user wishes to modify this plot, as shown below:
+
+```{r}
+mod_data <- results$resultsAll %>% 
+  mutate(Feature = rownames(results$resultsAll))
+
+mod_data %>% 
+  ggplot(aes(x = exp(MeanCoefficient), y = SelectionFrequency, label = Feature)) + 
+  geom_point(aes(color = .data$SelectionFrequency > 0.8), show.legend = FALSE) + 
+  geom_text_repel(data = mod_data %>% 
+              filter(SelectionFrequency > 0.8) ) +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_hline(yintercept = 0.8, linetype = "dashed", color = "blue") +
+  theme(legend.position = "none") +
+  xlab("Mean hazard ratio") + ylab("Selection Frequency") +
+  theme_bw()
+```
 
 
+It is important to note that the `RF` and `GBM` methods to have variable importance plots but they are not as interpretable as these methods don't return coefficients to explore the effect these variables have on the prediction. For methods `SVM` and `NN` the theoretical properties to assess variable importance haven't been resolved yet and thus the are not estimated here.
+To get an idea of the 'general direction' of the effect of a feature in those methods we include heatmaps sorted by predicted risk score to explore possible patterns in the data. Note that these heatmaps are separated for binary and continous features:
+
+```{r}
+results$heatmap.sorted.bin
+```
+
+As shown in the heatmap above we get a strong intuition that `ImpCov1` drives the risk score upward (unfavorable prognostic), while `ImpCov4` leads the risk score downward (favorable prognostic).
+
+
+## Resulting Stratification
+
+In a clinical research setting it is also going to be of interest to try distinguish risk groups in order to make clinical decision regarding the treatment path of a patient when their disease is diagnosed. Along with the previous results `getResults_OC()` will return a Kaplan-Meier plot stratifying the dataset into risk groups. 
+The `cuts` argument controls how the stratification is performed. It expects the users to input quantiles at which the stratification should be performed (eg: median requires to `cuts = 0.5`, quartile requires `cuts = c(0.25,0.5,0.75)`, etc). By default this value is set NULL, and `getResults_OC()` will generate risk groups automatically be performing a `kmeans()` clustering using 2 to 5 cluster. We use [Akaike information criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion) to select the optimal number of clusters to be selected. The function will then reverse engineer the corresponding quantile cuts and print them on the histogram of the distribution of the average predicted risk score shown in the `Predicted risk score` section above. 
+
+The specific quantile cuts found using the clustering or the ones inputted by the users are returned and can be used to find the corresponding predicted risk values associated to them:
+
+```{r}
+results$cuts
+```
+
+```{r}
+quantile(results$scaled.risk,results$cuts)
+```
+
+These are then applied to the time to event data and returned with a Kaplan-Meier plot:
+
+```{r}
+results$KM
+```
+
+To ease interpretation a summary table is also available in the output:
+
+```{r}
+kable(results$survivalTable)
+```
+
+# Validation tools
+
+In order for a model to be useful it is necessary for it to be able to be reproduceable in external datasets containing information for a similar problem. In many cases external validation is required to assess the validity of a method. We therefore included in `OncoCast` a tool to perform external validation in a efficient and simple way. This can be done using the `validate()` function that takes as input the oncocast ensemble model generated on the original dataset from the `OncoCast()` function, the object output of the `getResults_OC()` function, the new data to perform validation on and it's corresponding formula to assess the outcome.
+
+We show here an example simulating data in a similar fashion to the `survData` dataset as the external dataset. 
+
+```{r}
+set.seed(1)
+ImpCovMin <- 1
+ImpCovMax <- 1.5
+n <- 300
+
+x.imp <- cbind(rbinom(n, 1, runif(1,0.1,0.5)),rbinom(n, 1, runif(1,0.1,0.5)),
+               rbinom(n, 1, runif(1,0.1,0.5)),rbinom(n, 1, runif(1,0.1,0.5)),
+               rbinom(n, 1, runif(1,0.1,0.5)))
+
+coefs <- c(runif(2,ImpCovMin,ImpCovMax),runif(3,-ImpCovMax,-ImpCovMin))
+x <- x.imp
+mu <- as.vector(coefs %*% t(x))
+
+time <- rexp(n,exp(mu))*12
+c <- runif(n,0,as.numeric(quantile(time,0.8)))
+status <- ifelse(time < c , 1,0)
+time <-pmin(time,c)
+
+numDummy <- 10
+DummyCov <- lapply(1:numDummy,function(x){
+  rbinom(n, 1, runif(1,0.1,0.2))
+})
+x.dumb <- do.call(cbind, DummyCov)
+x <- as.data.frame(cbind(x,x.dumb))
+
+data <- as.data.frame(cbind(time,status,x))
+colnames(data) <- c("time","status",paste0("ImpCov",1:ncol(x.imp)),paste0("Cov",(ncol(x.imp)+1):ncol(x)))
+rownames(data) <- paste0("Patient",1:n)
+in.data <- data
+```
+
+Note that the `validate()` function does not require all the predictors existing in the original data used in the `OncoCast()` ensemble model but we strongly recommend to have datasets with a large set of common predictors to avoid spurious results. 
+Using the dataset generated above as input for validation:
+
+```{r}
+validation <- validate(OC_object = onco_run$LASSO,Results  = results, in.data = in.data, formula = Surv(time,status)~.)
+```
+
+Similarly to the `getResults_OC()` function, the `validation` object is a list containing summary results of the prediction accuracy of the validation and the resulting stratification generated using the same cuts as in the original ensemble model.
+
+
+```{r}
+summary(validation$CPE)
+validation$RiskHistogram.new
+validation$KM
+kable(validation$survTable,row.names = TRUE)
+```
+
+We see here that the stratification generated by the `getResults_OC()` applied to the new data in the `validate()` function leads to very similar stratification to the orginal one seen in the `Results Stratification` section above. 
+
+Note that for simplicity for futher potential analyses the resulting predicted risk score and the predicted risk group of the observations in the new data are returned as new variables in that dataset:
+
+```{r}
+kable(head(validation$out.data %>% 
+  select(time,status, OncoCastRiskScore, RiskGroup)))
+```
+
+
+# Individual prediction
