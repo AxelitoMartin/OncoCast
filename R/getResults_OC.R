@@ -40,10 +40,10 @@
 #' @keywords Results
 #' @export
 #' @examples library(OncoCast)
-#' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
+#' test <- OncoCast(data=survData[1:100,],formula = Surv(time,status)~.,
 #' method = "LASSO",runs = 30,
 #' save = FALSE,nonPenCol = NULL,cores =1)
-#' results <- getResults_OC(OC_object=test$LASSO,data=survData,
+#' results <- getResults_OC(OC_object=test$LASSO,data=survData[1:100,],
 #' cuts=c(0.2,0.4,0.6,0.8),
 #' geneList=NULL,mut.data=TRUE)
 #' @import
@@ -164,14 +164,14 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #' @keywords Results
 #' @export
 #' @examples
-#' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
-#' family = "cox",method = c("LASSO"),runs = 30,
-#' save = FALSE,nonPenCol = NULL,cores =1)
+#' library(OncoCast)
+#' test <- OncoCast(data=survData[1:100,],formula = Surv(time,status)~.,
+#'                  family = "cox",method = c("LASSO"),runs = 30,
+#'                  save = FALSE,nonPenCol = NULL,cores =1)
 #' OC_object <- test$LASSO
-#' data <- survData
+#' data <- survData[1:100,]
 #' cuts <- c(0.2,0.4,0.6,0.8)
-#' out.test <- outputSurv(OC_object,data,
-#'                        geneList=NULL,cuts,mut.data=TRUE)
+#' out.test <- outputSurv(OC_object,data, family = "cox",method = "LASSO",cuts = cuts, LT = FALSE,timeType = "Months")
 #' @import
 #' magrittr
 #' dtplyr
@@ -194,6 +194,7 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
     x.start <- ifelse(is.null(args[['x.start']]),0,args[['x.start']])
     break.time <- ifelse(is.null(args[['break.time']]),6,args[['break.time']])
+    palette.print <- args[['palette.print']]#ifelse(is.null(args[['palette.print']]),NULL,args[['palette.print']])
 
     MD <- 12
 
@@ -311,6 +312,8 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     meanRS <- mean(RiskScore)
     if(LT) refit.risk <- coxph(Surv(data$time1,data$time2,data$status)~RiskScore)
     if(!LT) refit.risk <- coxph(Surv(data$time,data$status)~RiskScore)
+    refit.risk_table <- as.data.frame(summary(refit.risk)$coefficients) %>%
+      rename(Coefficient = coef, HazardRatio = `exp(coef)`, SE = `se(coef)`, Z = z, Pvalue = `Pr(>|z|)`)
     Risk <- as.data.frame(RiskScore)
 
     RiskHistogram <- ggplot(Risk, aes(x = RiskScore, y = ..density..)) +
@@ -461,14 +464,30 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
     if(LT) limit <- as.numeric(quantile(data$time2,plotQuant))
     if(!LT) limit <- as.numeric(quantile(data$time,plotQuant))
 
-    if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
-                             surv.median.line = surv.median.line, risk.table = risk.table,
-                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
-      labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
-    if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
-                             surv.median.line = surv.median.line, risk.table = risk.table,
-                             data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
-      labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
+    if(LT) {
+      if(is.null(palette.print))
+        KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
+                         surv.median.line = surv.median.line, risk.table = risk.table,
+                         data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+          labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+      else
+        KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
+                         surv.median.line = surv.median.line, risk.table = risk.table,
+                         data = data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
+          labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+    }
+    if(!LT){
+      if(is.null(palette.print))
+        KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
+                         surv.median.line = surv.median.line, risk.table = risk.table,
+                         data = data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+          labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+      else
+        KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=data, conf.type = "log-log"),conf.int  = TRUE,
+                         surv.median.line = surv.median.line, risk.table = risk.table,
+                         data = data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
+          labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+    }
 
 
 
@@ -533,9 +552,9 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
         geom_vline(xintercept = as.numeric(quantile(RiskScore, cuts)),
                    color = "blue", linetype = "dashed")
     }
-    return(list("CPE"=CPE,"CI" = CI.BP,"risk.raw"=average.risk,"scaled.risk"=RiskScore,
+    return(list("CPE"=CPE,"risk.raw"=average.risk,"scaled.risk"=RiskScore, # "CI" = CI.BP,
                 "RiskHistogram"=RiskHistogram,"RiskScoreSummary"=as.data.frame(t(summary.RiskScore)),
-                "RiskRefit"=refit.risk,"rawCuts"= as.numeric(qts), "cuts" = cuts,
+                "RiskRefit"=refit.risk, "RiskRefitTable" = refit.risk_table,"rawCuts"= as.numeric(qts), "cuts" = cuts,
                 "uniVolcano"=uniVolcano,"topHits" = topHits,
                 "selectInflPlot" = selectInflPlot,"Fits"=allCoefs,
                 "heatmap.sorted.bin"=heatmap.sorted.bin,"heatmap.sorted.cont"=heatmap.sorted.cont,

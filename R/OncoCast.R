@@ -62,12 +62,12 @@
 #' @keywords Selection, penalized regression
 #' @export
 #' @examples library(OncoCast)
-#' test <- OncoCast(data=survData,formula = Surv(time,status)~.,
+#' test <- OncoCast(data=survData[1:100,],formula = Surv(time,status)~.,
 #' method = "LASSO",runs = 30,
 #' save = FALSE,nonPenCol = NULL,cores =2)
 #' @import
-#' foreach
 #' parallel
+#' foreach
 #' doParallel
 #' gbm
 #' survival
@@ -129,7 +129,11 @@ OncoCast <- function(data,family = "cox",formula, method = c("ENET"),
   print("Data check performed, ready for analysis.")
 
   ### Prepare cores
-  cl <- makeCluster(cores,outfile = paste0(studyType,"_OncoCast_log.txt"))
+  # cl <- makeCluster(cores,outfile = paste0(studyType,"_OncoCast_log.txt"))
+  ### error in R 4.0 with this ###
+  cl <- parallel::makeCluster(cores,
+                              setup_strategy = "sequential",
+                              outfile = paste0(studyType,"_OncoCast_log.txt"))
   registerDoParallel(cl)
 
   ##### generate empty output objects #####

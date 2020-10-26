@@ -9,8 +9,9 @@ validate(
   Results,
   in.data,
   formula,
+  out.ties = FALSE,
   limit = NULL,
-  plot.cuts = T,
+  plot.cuts = TRUE,
   ...
 )
 }
@@ -24,11 +25,14 @@ with patients as rows and features as columns.}
 
 \item{formula}{the formula to be used for validation}
 
+\item{out.ties}{phcpe argument to calculate the concordance index. If out.ties is set to FALSE,
+pairs of observations tied on covariates will be used to calculate the CPE. Otherwise, they will not be used.}
+
 \item{limit}{Optional numerical argument to set a time limit on the KM plot}
 
 \item{plot.cuts}{Boolean specifying if lines should be added to risk histogram to indicate where the cuts were performed}
 
-\item{...}{futher arguments}
+\item{...}{futher arguments applicable in ggsurvplot}
 }
 \value{
 data.out : The data frame inputted in the function with an additional column giving the predicted risk

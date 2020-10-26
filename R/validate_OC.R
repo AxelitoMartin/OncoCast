@@ -8,9 +8,11 @@
 #' @param in.data New data set containing the information of the incoming patients. Should be a dataframe
 #' with patients as rows and features as columns.
 #' @param formula the formula to be used for validation
+#' @param out.ties phcpe argument to calculate the concordance index. If out.ties is set to FALSE,
+#' pairs of observations tied on covariates will be used to calculate the CPE. Otherwise, they will not be used.
 #' @param limit Optional numerical argument to set a time limit on the KM plot
 #' @param plot.cuts Boolean specifying if lines should be added to risk histogram to indicate where the cuts were performed
-#' @param ... futher arguments
+#' @param ... futher arguments applicable in ggsurvplot
 #' @return data.out : The data frame inputted in the function with an additional column giving the predicted risk
 #' score of the incoming patients.
 #' @return RiskHist : A histogram of the distribution of the risk scores of patients in the given dataset.
@@ -52,12 +54,14 @@
 
 
 
-validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = T,...){
+validate <- function(OC_object,Results,in.data,formula, out.ties=FALSE,limit = NULL,plot.cuts = TRUE,...){
 
   args <- list(...)
   surv.median.line <- ifelse(is.null(args[['surv.median.line']]),"hv",args[['surv.median.line']])
   risk.table <- ifelse(is.null(args[['risk.table']]),T,args[['risk.table']])
   x.start <- ifelse(is.null(args[['x.start']]),0,args[['x.start']])
+  break.time <- ifelse(is.null(args[['break.time']]),6,args[['break.time']])
+  palette.print <- args[['palette.print']]
 
   OC_object <- Filter(Negate(is.null), OC_object)
   means.train <- sapply(OC_object,"[[","means")
@@ -181,6 +185,12 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
     }
   }
 
+  # Get CPE of validation #
+  CPE <- unlist(lapply(all.pred, function(pred_risk){
+    temp_formula <- formula(paste0(formula[[2]][1],"(", paste0(formula[[2]][-1],collapse = ","),")","~ pred_risk" ))
+    paste0(formula[[2]], "~ pred_risk")
+    CPE <- as.numeric(phcpe(coxph(temp_formula, data = in.data),out.ties=out.ties ))
+  }))
 
   ### PUTTING THINGS TOGETHER ####
   all.pred <- do.call("cbind",all.pred)
@@ -241,8 +251,8 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
 
   # if(numGroups == 2){riskGroup[is.na(riskGroup)] <- 1}
   in.data$RiskGroup <- riskGroup
-  in.data$RiskGroup <- factor(in.data$RiskGroup, levels = c(1:numGroups) )
-
+  in.data$RiskGroup <- factor(in.data$RiskGroup, levels = c(1:length(unique(in.data$RiskGroup))) )
+  numGroups <- length(levels(in.data$RiskGroup))
 
   if(LT == TRUE) {
     fit0 <- coxph(Surv(time1,time2,status) ~ RiskGroup,data=in.data,
@@ -273,12 +283,37 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
     if(!LT) limit <- as.numeric(max(in.data$time))
   }
 
-  if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
-                           data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
-    labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
-  if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
-                           data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
-    labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
+  # if(LT) {KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+  #                          data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
+  #   labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))} #,xlim=c(0,limit)
+  # if(!LT){KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,surv.median.line = surv.median.line,
+  #                          data = in.data,break.time.by = 6,xlim=c(x.start,limit),risk.table = risk.table) + xlab("Time") +
+  #   labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))}
+
+  if(LT) {
+    if(is.null(palette.print))
+      KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
+                       surv.median.line = surv.median.line, risk.table = risk.table,
+                       data = in.data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+        labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+    else
+      KM <- ggsurvplot(survfit(Surv(time1,time2,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
+                       surv.median.line = surv.median.line, risk.table = risk.table,
+                       data = in.data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
+        labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+  }
+  if(!LT){
+    if(is.null(palette.print))
+      KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
+                       surv.median.line = surv.median.line, risk.table = risk.table,
+                       data = in.data,xlim=c(x.start,limit),break.time.by = break.time) + xlab(paste0("Time (",timeType,")")) +
+        labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+    else
+      KM <- ggsurvplot(survfit(Surv(time,status) ~ RiskGroup,data=in.data, conf.type = "log-log"),conf.int  = TRUE,
+                       surv.median.line = surv.median.line, risk.table = risk.table,
+                       data = in.data,xlim=c(x.start,limit),break.time.by = break.time, palette = palette.print) + xlab(paste0("Time (",timeType,")")) +
+        labs(title = paste("Kaplan Meier Plot (p-value : " ,round(log.test.pval,digits =5),")",sep=""))
+  }
 
 
   survivalGroup <- as.data.frame(matrix(nrow=numGroups,ncol=4))
@@ -315,7 +350,7 @@ validate <- function(OC_object,Results,in.data,formula,limit = NULL,plot.cuts = 
                  color = "blue", linetype = "dashed")
   }
 
-  return(list("RiskHistogram.new"=RiskHistogram.new,"out.data"=in.data,"KM"=KM,"survTable"=survivalGroup))
+  return(list("CPE"=CPE,"RiskHistogram.new"=RiskHistogram.new,
+              "out.data"=in.data,"KM"=KM,"survTable"=survivalGroup))
 
 }
-

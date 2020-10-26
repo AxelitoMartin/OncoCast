@@ -87,10 +87,10 @@ Only one such object can be inputted at a time in the getResults_OC function.
 }
 \examples{
 library(OncoCast)
-test <- OncoCast(data=survData,formula = Surv(time,status)~.,
+test <- OncoCast(data=survData[1:100,],formula = Surv(time,status)~.,
 method = "LASSO",runs = 30,
 save = FALSE,nonPenCol = NULL,cores =1)
-results <- getResults_OC(OC_object=test$LASSO,data=survData,
+results <- getResults_OC(OC_object=test$LASSO,data=survData[1:100,],
 cuts=c(0.2,0.4,0.6,0.8),
 geneList=NULL,mut.data=TRUE)
 }
