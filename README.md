@@ -65,7 +65,6 @@ before their first use of the method. They will be guided through:
 
 There exist a version of OncoCast completely web-based requiring no
 coding skills and minimal inputs to create and explore an ensemble
-model. It can be found through this [online
-app](https://axelitomartin.shinyapps.io/OncoCast/). The user will only
+model. It can be found through this [online app](). The user will only
 be asked to input the dataset they wish to study and the method they
 want to use to create the emsemble model.
