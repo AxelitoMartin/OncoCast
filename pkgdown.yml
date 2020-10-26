@@ -1,0 +1,10 @@
+pandoc: 2.7.3
+pkgdown: 1.5.1
+pkgdown_sha: ~
+articles:
+  Ensemble-Learner: Ensemble-Learner.html
+  OncoCast-Data: OncoCast-Data.html
+  Online-Tools: Online-Tools.html
+  Risk-Prediction: Risk-Prediction.html
+last_built: 2020-10-26T04:37Z
+
