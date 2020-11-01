@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 [![Travis build status](https://travis-ci.com/AxelitoMartin/OncoCast.svg?branch=development)](https://travis-ci.org/AxelitoMartin/OncoCast)
 [![Codecov test coverage](https://codecov.io/gh/AxelitoMartin/OncoCast/branch/development/graph/badge.svg)](https://codecov.io/gh/AxelitoMartin/OncoCast?branch=development)
+[![DOI](https://zenodo.org/badge/211392347.svg)](https://zenodo.org/badge/latestdoi/211392347)
 <!-- badges: end -->
 
 
