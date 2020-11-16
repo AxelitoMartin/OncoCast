@@ -1,0 +1,92 @@
+---
+title: "OncoCast Report"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+params:
+  n: NA
+  n.events: NA
+  n.features: NA
+  method: NA
+  n.CV: NA
+  riskHist: NA
+  riskSum: NA
+  CPE: NA
+  riskTable: NA
+  cuts: NA
+  KM: NA
+  survTable: NA
+  effectPlot: NA
+  binMap: NA
+  contMap: NA
+  ValHist: NA
+  ValKM: NA
+  IndKM: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,fig.height = 8, fig.width = 12,message = F,warning = F)
+library(knitr)
+```
+
+# Summary
+
+In this file we summarise the results from the oncocast run with the inputted data that had `r params$n` observations for `r params$n.events` events with `r params$n.features` features. You selected OncoCast using `r params$method` with `r params$n.CV` cross-validation.
+
+# OncoCast run
+
+## Prognostic performance
+
+In this first section we go over the results shown in the "Dashboard" tab of the app. This summarises the average predicted risk distribution of patients, and the resulting prognostic power of the model
+
+```{r}
+params$riskHist
+kable(params$riskSum)
+kable(params$CPE)
+temp <- params$riskTable
+colnames(temp) <- c("Coefficient","Hazard Ratio","S.E.","Z-value","P-value")
+temp[1,] <- round(temp[1,],digits=4)
+if(temp[,5] < 0.00001) temp[,5] <- "<0.00001"
+kable(temp)
+```
+
+
+## Risk group stratification 
+
+We show here the resulting risk groups from the following dichotomization: `r paste0("RiskGroup",1:(length(params$cuts)+1),": ",c(0,params$cuts),"% to ",c(params$cuts,100),"% ",collapse = ",")` of the averaged predicted risk score of the cohort. We present the Kaplan-Meier stratification associated with these risk groups:
+
+```{r}
+params$KM
+kable(params$survTable)
+```
+
+
+## Feature selection and effect
+
+```{r,fig.width = 8}
+params$effectPlot
+```
+
+```{r}
+params$binMap
+```
+
+```{r}
+params$contMap
+```
+
+
+# Validation
+
+If you performed a validation either at a cohort level (Validation tab) or at the individual level (patient tab), the results will be displayed in this section.
+
+```{r}
+params$ValHist
+params$ValKM
+```
+
+```{r,fig.width = 8}
+params$IndKM
+```

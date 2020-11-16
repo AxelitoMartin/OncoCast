@@ -21,3 +21,32 @@ library(OncoCast)
 ```
 
 # `OncoCast` R shiny applications
+
+In order to make exploration of the results accessible to all, particularly people with little or no R training, we include interactive shiny apps in the package and online. These applications enable the user to either make a run of `OncoCast` or explore the results of a run that as already been performed and saved. This requires only the output of that run and the data used to perform it. Alternatively only the data to be used if the user selects to perform the run through the app.
+
+We will show how to access this applications through the package for both possible functionalities.
+
+## Running `OncoCast` through the package
+
+We include the `launchApp()` function in OncoCast to let users launch the app.
+
+```{r, eval=F}
+launchApp()
+```
+
+This will open a new window which summarises the way the app works, the goals of `OncoCast` and example data. By default the `AppType` field will select `Create OncoCast run` in the `Abstract` tab. Selecting the `OncoCast Run` tab will lead the user to a new page where they will be asked to input the data to be used for the run, along with the method and number of cross-validation to be used as shown below.
+
+```{r}
+# video_files <- list.files(".",
+#                          pattern = "intro_app_run.mp4",
+#                          recursive = TRUE,
+#                          all.files = FALSE,
+#                          full.names = TRUE)
+# print(video_files[1])
+# video_files <- gsub("\\./","",video_files)
+# print(video_files[1])
+```
+
+<img src="intro_app_run.gif" width=700" height="400" />
+
+
