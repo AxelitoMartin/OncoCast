@@ -48,6 +48,7 @@
 #' geneList=NULL,mut.data=TRUE)
 #' @import
 #' magrittr
+#' dplyr
 #' dtplyr
 #' ggplot2
 #' survminer
@@ -366,7 +367,13 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
     if(sum(uniques == 2) > 2){
       genes <- names(uniques[which(uniques == 2)])
-      if(method %in% c("LASSO","RIDGE","ENET") ) keep <- names(sort(selectFreq[match(genes,names(selectFreq))],decreasing = T)[1:pmin(15,length(genes))])
+      if(method %in% c("LASSO","RIDGE","ENET") ){
+        keep <- names(sort(selectFreq[match(genes,names(selectFreq))],decreasing = T)[1:pmin(15,length(genes))])
+        keep <- as.character(unlist(resultsAll %>%
+                                      filter(GeneName %in% keep) %>%
+                                      arrange(-MeanCoefficient,-SelectionFrequency) %>%
+                                      select(GeneName)))
+      }
       if(method %in% c("GBM","RF","SVM","NN")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
 
       if(!is.null(geneList)){
@@ -387,7 +394,13 @@ outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plot
 
     if(sum(uniques > 2) > 2){
       genes <- names(uniques[which(uniques > 2)])
-      if(method %in% c("LASSO","RIDGE","ENET") ) keep <- names(sort(selectFreq[match(genes,names(selectFreq))],decreasing = T)[1:pmin(15,length(genes))])
+      if(method %in% c("LASSO","RIDGE","ENET") ){
+        keep <- names(sort(selectFreq[match(genes,names(selectFreq))],decreasing = T)[1:pmin(15,length(genes))])
+        keep <- as.character(unlist(resultsAll %>%
+                                      filter(GeneName %in% keep) %>%
+                                      arrange(-MeanCoefficient,-SelectionFrequency) %>%
+                                      select(GeneName)))
+      }
       if(method %in% c("GBM","RF","SVM","NN")) keep <- names(sort(mean.imp[match(genes,names(mean.imp))],decreasing = T)[1:pmin(15,length(genes))])
 
       if(!is.null(geneList)){

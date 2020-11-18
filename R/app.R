@@ -1,53 +1,44 @@
-library(shiny)
-library(shinydashboard)
-library(survival)
-library(penalized)
-library(gbm)
-library(ranger)
-library(foreach)
-library(doParallel)
-library(stats)
-library(ggplot2)
-library(plotly)
-library(stats)
-library(reshape2)
-library(scales)
-library(pheatmap)
-library(survminer)
-library(shiny)
-library(shinydashboard)
-library(R.utils)
-library(rmarkdown)
-library(knitr)
-library(e1071)
-library(CPE)
-library(mlr)
-library(dplyr)
-library(fastDummies)
-library(neuralnet)
-library(NeuralNetTools)
-
-
-# source("R/appFunctions.R")
-# source("R/gbmExtras.R")
-# source("R/OncoCast.R")
-
-
-# test.dat <- read.csv("../../OncoCast/Test/appTest_data.csv",row.names = 1)
-# out <- OncoCast(data = test.dat,formula = Surv(time,status)~.,method = "RF",runs = 30,save = F,rf_gbm.save = T)
-# OC_object <- out[[1]]
-# results <- Progno.tab(OC_object,data=test.dat)
-# gene.plot <- gene.view(OC_object = OC_object,data = test.dat,LT = F,average.risk = results$risk.raw)
-# strat <- riskStrat(OC_object,test.dat,
-#                    cuts = 0.5,
-#                    results$risk.raw,results$LT,plotQuant=1)
-# real.test <- read.csv("../../OncoCast/Test/appTest_valdata.csv",row.names = 1)
-# val <- validate.app(OC_object,LassoFits = gene.plot$Fits,ori.risk = results$risk.raw,
-#              qts = strat$rawCuts,formula = "",in.data = real.test)
-
+#' app UI and server functions
+#'
+#' This file contains the ui and server functions for running the internal application of
+#' OncoCast.
+#' @param ... Futher arguments
+#' @return Web-based application
+#' @keywords application
+#' @export
+#' @examples library(OncoCast)
+#' @import
+#' plotly
+#' shiny
+#' shinydashboard
+#' survival
+#' penalized
+#' gbm
+#' ranger
+#' foreach
+#' doParallel
+#' stats
+#' ggplot2
+#' stats
+#' reshape2
+#' scales
+#' pheatmap
+#' survminer
+#' shiny
+#' shinydashboard
+#' R.utils
+#' rmarkdown
+#' knitr
+#' e1071
+#' CPE
+#' mlr
+#' dplyr
+#' fastDummies
+#' neuralnet
+#' NeuralNetTools
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Prognostic machine learning for survival (open BETA)",titleWidth = 500),
+  dashboardHeader(title = "Prognostic machine learning for survival analysis",titleWidth = 500),
 
   dashboardSidebar(width = 200,
                    selectInput("choice", label = "App type:",
@@ -208,7 +199,7 @@ ui <- dashboardPage(
                 ),
                 mainPanel(
                   htmlOutput("VolcanoHeader"),width = 12,
-                  plotlyOutput("effectPlot"),
+                  plotly::plotlyOutput("effectPlot"),
                   htmlOutput("heatmaphead"),
                   plotOutput("binMap"),
                   plotOutput("contMap")
@@ -254,7 +245,7 @@ ui <- dashboardPage(
                 ),
                 mainPanel(width = 12,
                           plotOutput("newRisk.ind"),
-                          plotlyOutput("KM.ind")#,
+                          plotly::plotlyOutput("KM.ind")#,
                           # tableOutput("survprob.ind")
                 )
               )
@@ -453,7 +444,7 @@ server <- function(input, output) {
   gene.plot <- reactive({gene.view(OC_object(),dat(),
                                    geneList = gsub(" ","",unlist(strsplit(input$GeneListRisk, split ="," ))),
                                    results()$LT,results()$risk.raw)})
-  output$effectPlot <- renderPlotly({gene.plot()$selectInflPlot})
+  output$effectPlot <- plotly::renderPlotly({gene.plot()$selectInflPlot})
 
   output$heatmaphead <- renderText({ paste("<h3> <u> <font color=\"black\"><b>","Distribution of features by risk",
                                            "</b></font> </u> </h3>") })
@@ -495,7 +486,7 @@ server <- function(input, output) {
   })
 
   output$newRisk.ind <- renderPlot({ind.results()$RiskHist})
-  output$KM.ind <- renderPlotly({ind.results()$IncKM})
+  output$KM.ind <- plotly::renderPlotly({ind.results()$IncKM})
   # output$survprob.ind <- renderTable(({ind.results()$survivalEst}))
 
 
