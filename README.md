@@ -7,6 +7,7 @@
 status](https://travis-ci.com/AxelitoMartin/OncoCast.svg?branch=development)](https://travis-ci.org/AxelitoMartin/OncoCast)
 [![Codecov test
 coverage](https://codecov.io/gh/AxelitoMartin/OncoCast/branch/development/graph/badge.svg)](https://codecov.io/gh/AxelitoMartin/OncoCast?branch=development)
+[![DOI](https://zenodo.org/badge/211392347.svg)](https://zenodo.org/badge/latestdoi/211392347)
 <!-- badges: end -->
 
 ## An Ensemble Learning Approach for Outcome Prediction in Precision Oncology Setting
