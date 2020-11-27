@@ -6,6 +6,19 @@
 \usage{
 riskStrat(OC_object, data, cuts, average.risk, LT, plotQuant = 1)
 }
+\arguments{
+\item{OC_object}{OncoCast() function output}
+
+\item{data}{The corresponding data to create the OncoCast run}
+
+\item{cuts}{The quantile cuts to made in the data for stratification}
+
+\item{average.risk}{The average predicted risk score}
+
+\item{LT}{Boolean specifying if data is left-truncated}
+
+\item{plotQuant}{A numeric entry between 0-1 that defines what proportion of patients will be represented on the Kaplan-Meier plot.}
+}
 \description{
 riskStrat
 }

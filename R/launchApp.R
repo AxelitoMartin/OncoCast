@@ -9,7 +9,6 @@
 #' shinydashboard
 
 launchApp <- function(){
-  # path <- find.package("OncoCast")
 
   runApp(
     appDir = paste0("R")

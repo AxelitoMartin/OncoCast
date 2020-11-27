@@ -171,31 +171,7 @@
 <span class="co">#&gt;   .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt; </span>
 <span class="co">#&gt;  $ family   : chr "cox"</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="no">onco_run</span>$<span class="no">GBM</span><span class="kw">[[</span><span class="fl">1</span>]])
-<span class="co">#&gt; List of 9</span>
-<span class="co">#&gt;  $ CI                   : num 0.745</span>
-<span class="co">#&gt;  $ CPE                  : num 0.747</span>
-<span class="co">#&gt;  $ method               : chr "GBM"</span>
-<span class="co">#&gt;  $ Vars                 : Named num [1:15] 182 353 459 596 413 ...</span>
-<span class="co">#&gt;   ..- attr(*, "names")= chr [1:15] "ImpCov1" "ImpCov2" "ImpCov3" "ImpCov4" ...</span>
-<span class="co">#&gt;  $ predicted            : Named num [1:300] -0.588 NA NA NA NA ...</span>
-<span class="co">#&gt;   ..- attr(*, "names")= chr [1:300] "Patient1" "Patient2" "Patient3" "Patient4" ...</span>
-<span class="co">#&gt;  $ bestTreeForPrediction: int 500</span>
-<span class="co">#&gt;  $ params               :'data.frame':   1 obs. of  4 variables:</span>
-<span class="co">#&gt;   ..$ .interaction.depth: num 1</span>
-<span class="co">#&gt;   ..$ .n.trees          : num 500</span>
-<span class="co">#&gt;   ..$ .shrinkage        : num 0.01</span>
-<span class="co">#&gt;   ..$ .n.minobsinnode   : num 10</span>
-<span class="co">#&gt;   ..- attr(*, "out.attrs")=List of 2</span>
-<span class="co">#&gt;   .. ..$ dim     : Named int [1:4] 2 1 2 2</span>
-<span class="co">#&gt;   .. .. ..- attr(*, "names")= chr [1:4] ".interaction.depth" ".n.trees" ".shrinkage" ".n.minobsinnode"</span>
-<span class="co">#&gt;   .. ..$ dimnames:List of 4</span>
-<span class="co">#&gt;   .. .. ..$ .interaction.depth: chr [1:2] ".interaction.depth=1" ".interaction.depth=2"</span>
-<span class="co">#&gt;   .. .. ..$ .n.trees          : chr ".n.trees=500"</span>
-<span class="co">#&gt;   .. .. ..$ .shrinkage        : chr [1:2] ".shrinkage=0.001" ".shrinkage=0.010"</span>
-<span class="co">#&gt;   .. .. ..$ .n.minobsinnode   : chr [1:2] ".n.minobsinnode=10" ".n.minobsinnode=20"</span>
-<span class="co">#&gt;  $ formula              :Class 'formula'  language Surv(time, status) ~ .</span>
-<span class="co">#&gt;   .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt; </span>
-<span class="co">#&gt;  $ family               : chr "cox"</span></pre></body></html></div>
+<span class="co">#&gt;  NULL</span></pre></body></html></div>
 <p>These complex objects can be used directly as inputs in the <code><a href="../reference/getResults_OC.html">getResults_OC()</a></code> function that will recognize what type of object they are based on the family and method used and will process this output appropriately to return comprehensible results (see <a href="https://axelitomartin.github.io/OncoCast/articles/ERisk-Prediction.html"><strong>Generating comprehensible results</strong></a> article for more information).</p>
 </div>
 <div id="binary-outcome" class="section level2">

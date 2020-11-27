@@ -120,7 +120,155 @@
 <div id="oncocast-online" class="section level2">
 <h2 class="hasAnchor">
 <a href="#oncocast-online" class="anchor"></a><code>OncoCast</code> Online</h2>
-<p>There exist a version of OncoCast completely web-based requiring no coding skills and minimal inputs to create and explore an ensemble model. It can be found through this <a href="">online app</a>. The user will only be asked to input the dataset they wish to study and the method they want to use to create the emsemble model.</p>
+<p>There exist a version of OncoCast completely web-based requiring no coding skills and minimal inputs to create and explore an ensemble model. It can be found through this <a href="https://axelitomartin.shinyapps.io/OncoCast/?_ga=2.133036616.733046146.1606492754-1896886074.1572897510"><strong>online RShiny application</strong></a>. The user will only be asked to input the dataset they wish to study and the method they want to use to create the emsemble model.</p>
+</div>
+<div id="introductory-example" class="section level2">
+<h2 class="hasAnchor">
+<a href="#introductory-example" class="anchor"></a>Introductory example</h2>
+<p>Here we show a simple example of OncoCast’s capacities utilizing an internal dataset. First constructing the ensemble model using for simplicity the LASSO method:</p>
+<div class="sourceCode" id="cb3"><pre class="r"><span class="no">onco_run</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/OncoCast.html">OncoCast</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">survData</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="st">"cox"</span>, <span class="kw">formula</span> <span class="kw">=</span> <span class="fu">Surv</span>(<span class="no">time</span>,<span class="no">status</span>)~<span class="no">.</span>, <span class="kw">method</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"LASSO"</span>),
+                     <span class="kw">runs</span> <span class="kw">=</span> <span class="fl">50</span>, <span class="kw">cores</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">save</span> <span class="kw">=</span> <span class="fl">FALSE</span>
+)
+<span class="co">#&gt; [1] "Data check performed, ready for analysis."</span>
+<span class="co">#&gt; [1] "LASSO SELECTED"</span></pre></div>
+<p>The output of the <a href="https://axelitomartin.github.io/OncoCast/reference/OncoCast.html"><code><a href="reference/OncoCast.html">OncoCast()</a></code></a> function can used directly in the <a href="https://axelitomartin.github.io/OncoCast/reference/getResults_OC.html"><code><a href="reference/getResults_OC.html">getResults_OC()</a></code></a> function to create a set of comprehensible results to be explored.</p>
+<div class="sourceCode" id="cb4"><pre class="r"><span class="no">results</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/getResults_OC.html">getResults_OC</a></span>(<span class="kw">OC_object</span> <span class="kw">=</span> <span class="no">onco_run</span>$<span class="no">LASSO</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">survData</span>)
+<span class="co">#&gt; Warning: Vectorized input to `element_text()` is not officially supported.</span>
+<span class="co">#&gt; Results may be unexpected or may change in future versions of ggplot2.</span></pre></div>
+<p>This will generate the average predicted risk score for each patient in the dataset, while automatically creating risk groups through Kmeans clustering using a penalty:</p>
+<div class="sourceCode" id="cb5"><pre class="r"><span class="fu">kable</span>(<span class="no">results</span>$<span class="no">RiskScoreSummary</span>)</pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left"></th>
+<th align="right">Lower 10%</th>
+<th align="right">1st Quarter</th>
+<th align="right">1st Tertile</th>
+<th align="right">Median</th>
+<th align="right">2nd Tertile</th>
+<th align="right">3rd Quarter</th>
+<th align="right">Upper 10%</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="left">Risk Score</td>
+<td align="right">2.64</td>
+<td align="right">4.04</td>
+<td align="right">4.39</td>
+<td align="right">5.58</td>
+<td align="right">6.08</td>
+<td align="right">6.25</td>
+<td align="right">7.75</td>
+</tr></tbody>
+</table>
+<div class="sourceCode" id="cb6"><pre class="r"><span class="no">results</span>$<span class="no">RiskHistogram</span></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-4-1.png" width="100%"></p>
+<p>In order to assess the prognostic performance of the ensemble model we record the concordance probability index found at each iteration:</p>
+<div class="sourceCode" id="cb7"><pre class="r"><span class="fu">kable</span>(<span class="no">results</span>$<span class="no">CPE</span>)</pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left"></th>
+<th align="right">Lower 10%</th>
+<th align="right">1st Quarter</th>
+<th align="right">Median</th>
+<th align="right">3rd Quarter</th>
+<th align="right">Upper 10%</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="left">Concordance probability estimate</td>
+<td align="right">0.73</td>
+<td align="right">0.74</td>
+<td align="right">0.75</td>
+<td align="right">0.77</td>
+<td align="right">0.78</td>
+</tr></tbody>
+</table>
+<p>Along with the average predicted risk score of each patients we can use as a predictor to refit a Cox proportional hazard model:</p>
+<div class="sourceCode" id="cb8"><pre class="r"><span class="fu">kable</span>(<span class="no">results</span>$<span class="no">RiskRefitTable</span>)</pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left"></th>
+<th align="right">Coefficient</th>
+<th align="right">HazardRatio</th>
+<th align="right">SE</th>
+<th align="right">Z</th>
+<th align="right">Pvalue</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="left">RiskScore</td>
+<td align="right">0.6701482</td>
+<td align="right">1.954527</td>
+<td align="right">0.055481</td>
+<td align="right">12.07888</td>
+<td align="right">0</td>
+</tr></tbody>
+</table>
+<p>Another metric of interest is the variable importance that we report using a variety of interactive plots, for the penalized regression methods such as LASSO (used here) we report this variable importance in the shape of a volcano plot. We show here a static version of it due to issue with README files:</p>
+<div class="sourceCode" id="cb9"><pre class="r"><span class="no">mod_data</span> <span class="kw">&lt;-</span> <span class="no">results</span>$<span class="no">resultsAll</span> <span class="kw">%&gt;%</span>
+  <span class="fu">mutate</span>(<span class="kw">Feature</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(<span class="no">results</span>$<span class="no">resultsAll</span>))
+
+<span class="no">mod_data</span> <span class="kw">%&gt;%</span>
+  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="kw">x</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(<span class="no">MeanCoefficient</span>), <span class="kw">y</span> <span class="kw">=</span> <span class="no">SelectionFrequency</span>, <span class="kw">label</span> <span class="kw">=</span> <span class="no">Feature</span>)) +
+  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="kw">color</span> <span class="kw">=</span> <span class="no">.data</span>$<span class="no">SelectionFrequency</span> <span class="kw">&gt;</span> <span class="fl">0.8</span>), <span class="kw">show.legend</span> <span class="kw">=</span> <span class="fl">FALSE</span>) +
+  <span class="fu">geom_text_repel</span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">mod_data</span> <span class="kw">%&gt;%</span>
+              <span class="fu"><a href="https://rdrr.io/r/stats/filter.html">filter</a></span>(<span class="no">SelectionFrequency</span> <span class="kw">&gt;</span> <span class="fl">0.8</span>) ) +
+  <span class="fu">geom_vline</span>(<span class="kw">xintercept</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">linetype</span> <span class="kw">=</span> <span class="st">"dashed"</span>) +
+  <span class="fu">geom_hline</span>(<span class="kw">yintercept</span> <span class="kw">=</span> <span class="fl">0.8</span>, <span class="kw">linetype</span> <span class="kw">=</span> <span class="st">"dashed"</span>, <span class="kw">color</span> <span class="kw">=</span> <span class="st">"blue"</span>) +
+  <span class="fu">theme</span>(<span class="kw">legend.position</span> <span class="kw">=</span> <span class="st">"none"</span>) +
+  <span class="fu">xlab</span>(<span class="st">"Mean hazard ratio"</span>) + <span class="fu">ylab</span>(<span class="st">"Selection Frequency"</span>) +
+  <span class="fu">theme_bw</span>()</pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-7-1.png" width="100%"></p>
+<p>Please refer to the <a href="https://axelitomartin.github.io/OncoCast/articles/Risk-Prediction.html"><strong>Risk_Prediction</strong></a> tab on the package’s website to see the interactive version.</p>
+<p>We also create heatmaps sorted by predicted risk (left is low risk, right is high risk) to explore the distribution of features as a function of risk score:</p>
+<div class="sourceCode" id="cb10"><pre class="r"><span class="no">results</span>$<span class="no">heatmap.sorted.bin</span></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-8-1.png" width="100%"></p>
+<p>Finally we show the resulting stratification from the cuts performed above through a Kaplan-Meier plot along with a summary table to ease interpretation:</p>
+<div class="sourceCode" id="cb11"><pre class="r"><span class="no">results</span>$<span class="no">KM</span></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-9-1.png" width="100%"></p>
+<div class="sourceCode" id="cb12"><pre class="r"><span class="fu">kable</span>(<span class="no">results</span>$<span class="no">survivalTable</span>)</pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">MedianOS</th>
+<th align="left">95%CI</th>
+<th align="left">1Ysurvival</th>
+<th align="left">3Ysurvival</th>
+<th align="left">HazardRatio</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">riskGroup 1</td>
+<td align="left">NA</td>
+<td align="left">(28.05,NA)</td>
+<td align="left">0.9 (0.74,0.96)</td>
+<td align="left">0.6 (0.3,0.8)</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">riskGroup 2</td>
+<td align="left">22.62</td>
+<td align="left">(18.95,31.68)</td>
+<td align="left">0.78 (0.67,0.86)</td>
+<td align="left">0.27 (0.13,0.44)</td>
+<td align="left">2.875</td>
+</tr>
+<tr class="odd">
+<td align="left">riskGroup 3</td>
+<td align="left">6.9</td>
+<td align="left">(4.39,10.94)</td>
+<td align="left">0.35 (0.25,0.45)</td>
+<td align="left">0.07 (0.02,0.15)</td>
+<td align="left">9.351</td>
+</tr>
+<tr class="even">
+<td align="left">riskGroup 4</td>
+<td align="left">1.21</td>
+<td align="left">(0.65,1.49)</td>
+<td align="left">0.02 (0,0.11)</td>
+<td align="left">0.02 (0,0.11)</td>
+<td align="left">41.316</td>
+</tr>
+</tbody>
+</table>
+<p>We also include tools to perform validation and individual patient survival predictions, please refer to the <a href="https://axelitomartin.github.io/OncoCast/articles/Risk-Prediction.html"><strong>Risk_Prediction</strong></a> tab on the package’s website for more information on those topics.</p>
 </div>
 </div>
   </div>

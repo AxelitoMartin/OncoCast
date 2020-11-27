@@ -19,10 +19,8 @@ Suggests:
 VignetteBuilder: knitr
 Imports:
     magrittr,
-    stats,
     ggplot2,
     plotly,
-    stats,
     reshape2,
     scales,
     pheatmap,
@@ -49,5 +47,4 @@ Depends:
     NeuralNetTools,
     e1071,
     CPE,
-    R.utils,
     penalized

@@ -98,22 +98,60 @@
 <a href="#oncocast-r-shiny-applications" class="anchor"></a><code>OncoCast</code> R shiny applications</h1>
 <p>In order to make exploration of the results accessible to all, particularly people with little or no R training, we include interactive shiny apps in the package and online. These applications enable the user to either make a run of <code>OncoCast</code> or explore the results of a run that as already been performed and saved. This requires only the output of that run and the data used to perform it. Alternatively only the data to be used if the user selects to perform the run through the app.</p>
 <p>We will show how to access this applications through the package for both possible functionalities.</p>
-<div id="running-oncocast-through-the-package" class="section level2">
+<div id="running-oncocast-through-the-internal-rshiny-application" class="section level2">
 <h2 class="hasAnchor">
-<a href="#running-oncocast-through-the-package" class="anchor"></a>Running <code>OncoCast</code> through the package</h2>
+<a href="#running-oncocast-through-the-internal-rshiny-application" class="anchor"></a>Running <code>OncoCast</code> through the internal RShiny application</h2>
 <p>We include the <code><a href="../reference/launchApp.html">launchApp()</a></code> function in OncoCast to let users launch the app.</p>
 <div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="../reference/launchApp.html">launchApp</a></span>()</pre></body></html></div>
 <p>This will open a new window which summarises the way the app works, the goals of <code>OncoCast</code> and example data. By default the <code>AppType</code> field will select <code>Create OncoCast run</code> in the <code>Abstract</code> tab. Selecting the <code>OncoCast Run</code> tab will lead the user to a new page where they will be asked to input the data to be used for the run, along with the method and number of cross-validation to be used as shown below.</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"># video_files &lt;- list.files(".",
-#                          pattern = "intro_app_run.mp4",
-#                          recursive = TRUE,
-#                          all.files = FALSE,
-#                          full.names = TRUE)
-# print(video_files[1])
-# video_files &lt;- gsub("\\./","",video_files)
-# print(video_files[1])</pre></body></html></div>
 <p><img src="intro_app_run.gif" width='700"' height="400"></p>
+<p>Note that <code>OncoCast</code> may need some time to run, particularly if you are using a dataset with a large number of observations. When the run is the done the following tab (<code>Dashboard</code>) will update.</p>
 </div>
+<div id="exploring-the-results" class="section level2">
+<h2 class="hasAnchor">
+<a href="#exploring-the-results" class="anchor"></a>Exploring the results</h2>
+<p>Regardless of if the user ran <code>OncoCast</code> on the RShiny application or chose to input a pre-processed run the exploration tabs will behave in the same fashion.</p>
+<div id="dashboard" class="section level3">
+<h3 class="hasAnchor">
+<a href="#dashboard" class="anchor"></a>Dashboard</h3>
+<p>The next tab (named Dashboard) summarises the distribution of the average predicted risk score of all patients used to perform <code>OncoCast</code>. It also summarises the concordance probability estimate distribution across all runs and refits a Cox’s proportional hazard model with the average predicted risk score as predictor. The user is free to choose which quantiles to use to perform cuts in the data in order to create risk groups. Note that these should be inputted in the bar at the top of the screen using integers between 1 and 99 (example: 33,66). By default Kmeans clustering will be used.</p>
+<p><img src="dashboard_app.gif" width='700"' height="400"></p>
+</div>
+<div id="risk-group-stratification" class="section level3">
+<h3 class="hasAnchor">
+<a href="#risk-group-stratification" class="anchor"></a>Risk group stratification</h3>
+<p>In the next tab we will be summarising the risk groups created in the dashboard tab above. Note that inputting custom cuts in that tab will be reflected here. We show a Kaplan-Meier plot of the resulting risk groups and a summary survival table for each of the groups below the graph.</p>
+<p><img src="riskstrat_app.gif" width='700"' height="400"></p>
+</div>
+<div id="gene-view" class="section level3">
+<h3 class="hasAnchor">
+<a href="#gene-view" class="anchor"></a>Gene View</h3>
+<p>This interactive tabs enables the user to explore specific features of interests. The first plot will summarise the variable importance of all features included in the <code>OncoCast</code> run. Following are heatmaps for binary and continuous features separetely, that are sorted by predicted risk (low to high risk from left to right). Inputting features’ names in the top bar will lead to them showing on the summary plot and adding them or ranking them at the top of the heatmaps below.</p>
+<p><img src="varimp_app.gif" width='700"' height="400"></p>
+</div>
+<div id="validation" class="section level3">
+<h3 class="hasAnchor">
+<a href="#validation" class="anchor"></a>Validation</h3>
+<p>The following tab focuses on validating the results found in the <code>OncoCast</code> run performed by applying it to an external dataset with the same features and corresponding time-to-event data. Simply input the new data as a ‘csv’ file. Note that missing features may lead to spurious results, we thus strongly recommend the user to ensure that all variables used in the <code>OncoCast</code> run are also present in the validation dataset. Moreover note that the features’ names must be an exact match to be used in the validation.</p>
+<p><img src="valtab_app.gif" width='700"' height="400"></p>
+</div>
+<div id="patient-view" class="section level3">
+<h3 class="hasAnchor">
+<a href="#patient-view" class="anchor"></a>Patient view</h3>
+<p>Similarly to the validation tab the user can also input data from a few patients that are of particular interest and explore their predicted survival curve. We achieve this by creating an interactive plot of predicted survival curve for each of the patients inputted with their probability of survival at each 6 months.</p>
+<p><img src="predict_app.gif" width='700"' height="400"></p>
+</div>
+<div id="download-summary" class="section level3">
+<h3 class="hasAnchor">
+<a href="#download-summary" class="anchor"></a>Download summary</h3>
+<p>Finally we let the user download both the results of the exploratory analysis and the <code>OncoCast</code> run in the final tab. Currently the results can only be downloaded as a HTML file to incorporate the interactive piece of this application.</p>
+</div>
+</div>
+</div>
+<div id="oncocast-online" class="section level1">
+<h1 class="hasAnchor">
+<a href="#oncocast-online" class="anchor"></a><code>OncoCast</code> online</h1>
+<p>This application is also available online with no requirements to have R or Rstudio installed on the user’s local machine. The fully online version application can be found <a href="https://axelitomartin.shinyapps.io/OncoCast/?_ga=2.124850764.733046146.1606492754-1896886074.1572897510"><strong>here</strong></a>. Note however that if the data of interest is relatively large we recommend performing <code>OncoCast</code> using the R console or even a cluster. Rshiny web applications do not allow for parallel processing which greatly increases the computing time.</p>
 </div>
   </div>
 

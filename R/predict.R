@@ -37,7 +37,7 @@
 #' scales
 #' pheatmap
 #' @importFrom plotly plot_ly layout toRGB add_ribbons
-#' @importFrom dplyr select filter mutate group_by rename summarise
+#' @importFrom dplyr select filter mutate group_by rename summarise arrange
 
 predIncomingSurv <- function(OC_object,new.data,surv.print= NULL,riskRefit){
 

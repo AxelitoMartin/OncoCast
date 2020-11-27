@@ -3,21 +3,18 @@
 \docType{data}
 \name{ui}
 \alias{ui}
-\title{app UI and server functions}
+\title{app UI functions}
 \format{
 An object of class \code{shiny.tag} of length 3.
 }
 \usage{
 ui
 }
-\arguments{
-\item{...}{Futher arguments}
-}
 \value{
 Web-based application
 }
 \description{
-This file contains the ui and server functions for running the internal application of
+This file contains the ui functions for running the internal application of
 OncoCast.
 }
 \examples{

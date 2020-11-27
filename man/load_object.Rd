@@ -6,6 +6,9 @@
 \usage{
 load_object(file)
 }
+\arguments{
+\item{file}{The file to be uploaded.}
+}
 \description{
 load_object
 }

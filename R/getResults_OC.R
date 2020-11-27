@@ -48,7 +48,6 @@
 #' geneList=NULL,mut.data=TRUE)
 #' @import
 #' magrittr
-#' dplyr
 #' dtplyr
 #' ggplot2
 #' survminer
@@ -56,7 +55,7 @@
 #' scales
 #' pheatmap
 #' @importFrom plotly plot_ly layout toRGB add_ribbons
-#' @importFrom dplyr select filter mutate group_by rename summarise
+#' @importFrom dplyr select filter mutate group_by rename summarise arrange
 
 
 
@@ -182,7 +181,7 @@ getResults_OC <- function(OC_object,data,cuts=NULL,geneList=NULL,mut.data=F,plot
 #' scales
 #' pheatmap
 #' @importFrom plotly plot_ly layout
-#' @importFrom dplyr select filter mutate group_by rename summarise
+#' @importFrom dplyr select filter mutate group_by rename summarise arrange
 
 
 outputSurv <- function(OC_object,data,family,method,geneList=NULL,cuts=NULL,plotQuant=1,plot.cuts=T,mut.data=F,LT,timeType,...){

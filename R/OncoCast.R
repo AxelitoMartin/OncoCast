@@ -72,7 +72,6 @@
 #' gbm
 #' survival
 #' fastDummies
-#' neuralnet
 #' NeuralNetTools
 #' glmnet
 #' PRROC
@@ -81,6 +80,8 @@
 #' ranger
 #' glmnet
 #' PRROC
+#' @importFrom neuralnet neuralnet
+#' @importFrom e1071 tune svm
 #' @importFrom penalized optL1 optL2 predict
 
 OncoCast <- function(data,family = "cox",formula, method = c("ENET"),

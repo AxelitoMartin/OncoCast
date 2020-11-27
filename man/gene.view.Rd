@@ -6,6 +6,17 @@
 \usage{
 gene.view(OC_object, data, geneList = NULL, LT, average.risk)
 }
+\arguments{
+\item{OC_object}{OncoCast() function output}
+
+\item{data}{The corresponding data to create the OncoCast run}
+
+\item{geneList}{A vector of genes to be annotated}
+
+\item{LT}{Boolean specifying if data is left-truncated}
+
+\item{average.risk}{The average predicted risk score}
+}
 \description{
 gene.view
 }
