@@ -6,6 +6,13 @@
 \usage{
 Progno.tab(OC_object, data, geneList = NULL)
 }
+\arguments{
+\item{OC_object}{OncoCast() function output}
+
+\item{data}{The corresponding data to create the OncoCast run}
+
+\item{geneList}{A vector of genes to be annotated}
+}
 \description{
 Progno.tab
 }

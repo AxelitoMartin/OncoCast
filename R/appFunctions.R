@@ -4,6 +4,7 @@
 
 #### LOAD FUNCTION ####
 #' load_object
+#' @param file The file to be uploaded.
 #' @export
 load_object <- function(file) {
   tmp <- new.env()
@@ -13,6 +14,9 @@ load_object <- function(file) {
 
 ##### get CI and other basic stuff #####
 #' Progno.tab
+#' @param OC_object OncoCast() function output
+#' @param data The corresponding data to create the OncoCast run
+#' @param geneList A vector of genes to be annotated
 #' @export
 Progno.tab <- function(OC_object,data,geneList=NULL){
 
@@ -71,13 +75,19 @@ Progno.tab <- function(OC_object,data,geneList=NULL){
 
 ##### RISK STRAT FUNCTION #####
 #' riskStrat
+#' @param OC_object OncoCast() function output
+#' @param data The corresponding data to create the OncoCast run
+#' @param cuts The quantile cuts to made in the data for stratification
+#' @param average.risk The average predicted risk score
+#' @param LT Boolean specifying if data is left-truncated
+#' @param plotQuant A numeric entry between 0-1 that defines what proportion of patients will be represented on the Kaplan-Meier plot.
 #' @export
 
 riskStrat <- function(OC_object,data,cuts,average.risk,LT,plotQuant=1){
 
   cuts <- unlist(strsplit(cuts, split ="," ))
   ######### RISK STRATIFICATION ############
-  
+
   if(length(cuts) == 0){
     # apply kmeans and take smallest #
     dists <- c()
@@ -181,6 +191,11 @@ riskStrat <- function(OC_object,data,cuts,average.risk,LT,plotQuant=1){
 
 ########################################
 #' gene.view
+#' @param OC_object OncoCast() function output
+#' @param data The corresponding data to create the OncoCast run
+#' @param geneList A vector of genes to be annotated
+#' @param LT Boolean specifying if data is left-truncated
+#' @param average.risk The average predicted risk score
 #' @export
 
 gene.view <- function(OC_object,data,geneList=NULL,LT,average.risk){
@@ -232,15 +247,15 @@ gene.view <- function(OC_object,data,geneList=NULL,LT,average.risk){
       selectInflPlot <- plot_ly(data = resultsAll, x = ~MeanCoefficient, y = ~SelectionFrequency,
                                 text = ~paste('Gene :',GeneName,
                                               '</br> Hazard Ratio :',round(exp(MeanCoefficient),digits=2)),
-                                mode = "markers",size = ~MutationFrequency,color = ~MeanCoefficient) %>% 
-        layout(title ="Volcano Plot",annotations = a) 
+                                mode = "markers",size = ~MutationFrequency,color = ~MeanCoefficient) %>%
+        layout(title ="Volcano Plot",annotations = a)
     }
 
     else{
       selectInflPlot <- plot_ly(data = resultsAll, x = ~MeanCoefficient, y = ~SelectionFrequency,
                                 text = ~paste('Gene :',GeneName,
                                               '</br> Hazard Ratio :',round(exp(MeanCoefficient),digits=2)),
-                                mode = "markers",size = ~MutationFrequency,color = ~MeanCoefficient) %>% 
+                                mode = "markers",size = ~MutationFrequency,color = ~MeanCoefficient) %>%
         layout(title ="Volcano Plot")
     }
 
@@ -341,10 +356,16 @@ gene.view <- function(OC_object,data,geneList=NULL,LT,average.risk){
 
 
 #########################################################
-#' validate.app
+#' validate_app
+#' @param OC_object OncoCast() function output
+#' @param LassoFits Fits outputted by getResults_OC()
+#' @param ori.risk Predicted risk score of OC_Object
+#' @param qts Quantiles of the cuts perforned
+#' @param in.data Data to be used for validation
+#' @param formula Formula to be used for validation
 #' @export
 
-validate.app <- function(OC_object,LassoFits,ori.risk,qts,in.data,formula){
+validate_app <- function(OC_object,LassoFits,ori.risk,qts,in.data,formula){
 
   # deal with formula #
   formula <- gsub(" ","",formula)
@@ -380,7 +401,7 @@ validate.app <- function(OC_object,LassoFits,ori.risk,qts,in.data,formula){
       )
       warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
     }
-    
+
     if(!all(is.na(match(colnames(in.data),features)))){
       matched.genes <- c(na.omit(match(colnames(in.data),features)))
       new.dat <- in.data[,which(!is.na(match(colnames(in.data),features)))]
@@ -437,7 +458,7 @@ validate.app <- function(OC_object,LassoFits,ori.risk,qts,in.data,formula){
       )
       warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
     }
-    
+
     if(!all(is.na(match(colnames(in.data),features)))){
       matched.genes <- c(na.omit(match(colnames(in.data),features)))
       new.dat <- in.data[,which(!is.na(match(colnames(in.data),features)))]
@@ -467,7 +488,7 @@ validate.app <- function(OC_object,LassoFits,ori.risk,qts,in.data,formula){
         all.pred <- lapply(OC_object,function(x){
           predict(x$SVM,new.dat)
         })}
-      
+
       if(OC_object[[1]]$method == "NN") {
         all.pred <- lapply(OC_object,function(x){
           predict(x$NN,new.dat)
@@ -578,11 +599,15 @@ validate.app <- function(OC_object,LassoFits,ori.risk,qts,in.data,formula){
 
 ######################################################
 
-#' predIncomingSurv.app
+#' predIncomingSurv_app
+#' @param OC_object OncoCast() function output
+#' @param new.data Data to be predicted
+#' @param surv.print Numeric vector of indexes to be predited
+#' @param riskRefit Corresponding getResults_OC() refitted cox model
 #' @export
 
 
-predIncomingSurv.app <- function(OC_object,new.data,surv.print= NULL,riskRefit){
+predIncomingSurv_app <- function(OC_object,new.data,surv.print= NULL,riskRefit){
 
   OC_object <- Filter(Negate(is.null), OC_object)
   # get all information needed from the oncocast object
@@ -616,7 +641,7 @@ predIncomingSurv.app <- function(OC_object,new.data,surv.print= NULL,riskRefit){
       )
       warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
     }
-    
+
     if(!all(is.na(match(colnames(new.data),features)))){
       matched.genes <- c(na.omit(match(colnames(new.data),features)))
       new.dat <- new.data[,which(!is.na(match(colnames(new.data),features)))]
@@ -652,7 +677,7 @@ predIncomingSurv.app <- function(OC_object,new.data,surv.print= NULL,riskRefit){
     if(OC_object[[1]]$method == "RF") features <- OC_object[[1]]$RF$forest$independent.variable.names
     if(OC_object[[1]]$method == "SVM") features <- names(OC_object[[1]]$Vars)
     if(OC_object[[1]]$method == "NN") features <- names(OC_object[[1]]$Vars)
-    
+
     dums <- apply(new.data,2,function(x){anyNA(as.numeric(as.character(x)))})
     if(sum(dums)){
       tmp <- new.data %>%
@@ -667,7 +692,7 @@ predIncomingSurv.app <- function(OC_object,new.data,surv.print= NULL,riskRefit){
       )
       warning("Character variables were transformed to dummy numeric variables. If you didn't have any character variables make sure all columns in your input data are numeric. The transformed data will be saved as part of the output.")
     }
-    
+
     if(!all(is.na(match(colnames(new.data),features)))){
       matched.genes <- c(na.omit(match(colnames(new.data),features)))
       new.dat <- new.data[,which(!is.na(match(colnames(new.data),features)))]
@@ -697,7 +722,7 @@ predIncomingSurv.app <- function(OC_object,new.data,surv.print= NULL,riskRefit){
         all.pred <- lapply(OC_object,function(x){
           predict(x$SVM,new.dat)
         })}
-      
+
       if(OC_object[[1]]$method == "NN") {
         all.pred <- lapply(OC_object,function(x){
           predict(x$NN,new.dat)

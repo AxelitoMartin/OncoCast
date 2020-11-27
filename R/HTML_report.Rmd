@@ -43,13 +43,13 @@ In this first section we go over the results shown in the "Dashboard" tab of the
 
 ```{r}
 params$riskHist
-kable(params$riskSum)
-kable(params$CPE)
+kable(params$riskSum, row.names = T)
+kable(params$CPE, row.names = T)
 temp <- params$riskTable
 colnames(temp) <- c("Coefficient","Hazard Ratio","S.E.","Z-value","P-value")
 temp[1,] <- round(temp[1,],digits=4)
 if(temp[,5] < 0.00001) temp[,5] <- "<0.00001"
-kable(temp)
+kable(temp, row.names = T)
 ```
 
 
@@ -59,7 +59,7 @@ We show here the resulting risk groups from the following dichotomization: `r pa
 
 ```{r}
 params$KM
-kable(params$survTable)
+kable(params$survTable, row.names = T)
 ```
 
 

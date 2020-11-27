@@ -1,57 +1,52 @@
-#' app UI and server functions
+#' app UI functions
 #'
-#' This file contains the ui and server functions for running the internal application of
+#' This file contains the ui functions for running the internal application of
 #' OncoCast.
-#' @param ... Futher arguments
 #' @return Web-based application
 #' @keywords application
 #' @export
 #' @examples library(OncoCast)
 #' @import
-#' plotly
 #' shiny
 #' shinydashboard
 #' survival
-#' penalized
 #' gbm
 #' ranger
 #' foreach
 #' doParallel
-#' stats
 #' ggplot2
-#' stats
 #' reshape2
 #' scales
 #' pheatmap
 #' survminer
-#' shiny
-#' shinydashboard
-#' R.utils
 #' rmarkdown
 #' knitr
-#' e1071
 #' CPE
 #' mlr
-#' dplyr
+#' dtplyr
 #' fastDummies
-#' neuralnet
 #' NeuralNetTools
+#' @importFrom dplyr select filter mutate group_by rename summarise arrange
+#' @importFrom neuralnet neuralnet
+#' @importFrom e1071 tune svm
+#' @importFrom plotly plot_ly layout toRGB add_ribbons
+#' @importFrom penalized optL1 optL2 predict
 
-ui <- dashboardPage(
-  dashboardHeader(title = "Prognostic machine learning for survival analysis",titleWidth = 500),
+ui <- shinydashboard::dashboardPage(
+  shinydashboard::dashboardHeader(title = "Prognostic machine learning for survival analysis",titleWidth = 500),
 
-  dashboardSidebar(width = 200,
+  shinydashboard::dashboardSidebar(width = 200,
                    selectInput("choice", label = "App type:",
                                choices = c("Create OncoCast run","Load OncoCast run")),
-                   sidebarMenuOutput("menu")
+                   shinydashboard::sidebarMenuOutput("menu")
   ),
 
-  dashboardBody(
-    tabItems(
+  shinydashboard::dashboardBody(
+    shinydashboard::tabItems(
 
 
       ### intro ###
-      tabItem(tabName = "intro",
+      shinydashboard::tabItem(tabName = "intro",
               h1("Introduction to OncoCast"),
               mainPanel(width = 14,
                         tags$b(tags$u(h2("Development context"))),
@@ -102,7 +97,7 @@ ui <- dashboardPage(
       ),
 
       ### Run oncocast ###
-      tabItem(tabName = "run",
+      shinydashboard::tabItem(tabName = "run",
               h1("Choose OncoCast parameters"),
               mainPanel(
                 radioButtons("method", "Select a method:",
@@ -134,7 +129,7 @@ ui <- dashboardPage(
               )),
 
       ### Load the file up your choosing ###
-      tabItem(tabName = "load",
+      shinydashboard::tabItem(tabName = "load",
               h1("Choose OncoCast file"),
               mainPanel(
                 fileInput("file", label = ""),
@@ -150,7 +145,7 @@ ui <- dashboardPage(
 
 
       # First tab content
-      tabItem(tabName = "fixed",
+      shinydashboard::tabItem(tabName = "fixed",
               sidebarLayout(
                 sidebarPanel(
                   width=12,
@@ -173,7 +168,7 @@ ui <- dashboardPage(
       ),
 
 
-      tabItem(tabName = "strat",
+      shinydashboard::tabItem(tabName = "strat",
               sidebarLayout(
                 sidebarPanel(width = 12,
                              h2("Risk Group Stratification")#,
@@ -188,7 +183,7 @@ ui <- dashboardPage(
               )
       ),
 
-      tabItem(tabName = "gene",
+      shinydashboard::tabItem(tabName = "gene",
               h2("Exploratory interactive gene plots"),
               sidebarLayout(
                 sidebarPanel(width = 12,
@@ -207,7 +202,7 @@ ui <- dashboardPage(
               )
       ),
 
-      tabItem(tabName = "valid",
+      shinydashboard::tabItem(tabName = "valid",
               h2("Validation of the model on an exterior dataset"),
               sidebarLayout(
                 sidebarPanel(width = 12,
@@ -232,7 +227,7 @@ ui <- dashboardPage(
 
 
 
-      tabItem(tabName = "patient",
+      shinydashboard::tabItem(tabName = "patient",
               h2("Predict the survival of individual patients"),
               sidebarLayout(
                 sidebarPanel(width = 12,
@@ -252,7 +247,7 @@ ui <- dashboardPage(
       ),
 
 
-      tabItem(tabName = "DL",
+      shinydashboard::tabItem(tabName = "DL",
               h2("Download summary report"),
               sidebarLayout(
                 sidebarPanel(width = 12,
@@ -274,39 +269,76 @@ ui <- dashboardPage(
   )
 )
 
-# Define server logic required to draw a histogram
+##################################
+
+
+#' app server function
+#'
+#' This file contains the  server functions for running the internal application of
+#' OncoCast.
+#' @param input input for server
+#' @param output output for server
+#' @return Web-based application
+#' @keywords application
+#' @export
+#' @examples library(OncoCast)
+#' @import
+#' shiny
+#' shinydashboard
+#' survival
+#' gbm
+#' ranger
+#' foreach
+#' doParallel
+#' ggplot2
+#' reshape2
+#' scales
+#' pheatmap
+#' survminer
+#' rmarkdown
+#' knitr
+#' CPE
+#' mlr
+#' fastDummies
+#' NeuralNetTools
+#' @importFrom dplyr select filter mutate group_by rename summarise arrange
+#' @importFrom neuralnet neuralnet
+#' @importFrom e1071 tune svm
+#' @importFrom plotly plot_ly layout toRGB add_ribbons
+#' @importFrom penalized optL1 optL2 predict
+
 server <- function(input, output) {
 
   options(shiny.maxRequestSize=500*1024^2)
 
 
-  output$menu <- renderMenu({
+  output$menu <- shinydashboard::renderMenu({
 
     if(input$choice=="Load OncoCast run"){
       my_list = list(
-        menuItem("Abstract", tabName = "intro", icon = icon("atlas")),
-        menuItem("Loading Preview", tabName = "load", icon = icon("arrow-alt-circle-down")),
-        menuItem("Dashboard", tabName = "fixed", icon = icon("bar-chart")),
-        menuItem("Risk Group Stratification", tabName = "strat", icon = icon("scissors")),
-        menuItem("Gene View", tabName = "gene", icon = icon("chart-bar")),
-        menuItem("Validation", tabName = "valid", icon = icon("check-circle")),
-        menuItem("Patient View", tabName = "patient", icon = icon("user-circle-o")),
-        menuItem("Download Summary", tabName = "DL",icon = icon("download")))
+        shinydashboard::menuItem("Abstract", tabName = "intro", icon = icon("atlas")),
+        shinydashboard::menuItem("Loading Preview", tabName = "load", icon = icon("arrow-alt-circle-down")),
+        shinydashboard::menuItem("Dashboard", tabName = "fixed", icon = icon("bar-chart")),
+        shinydashboard::menuItem("Risk Group Stratification", tabName = "strat", icon = icon("scissors")),
+        shinydashboard::menuItem("Gene View", tabName = "gene", icon = icon("chart-bar")),
+        shinydashboard::menuItem("Validation", tabName = "valid", icon = icon("check-circle")),
+        shinydashboard::menuItem("Patient View", tabName = "patient", icon = icon("user-circle-o")),
+        shinydashboard::menuItem("Download Summary", tabName = "DL",icon = icon("download")))
     }
 
     if(input$choice=="Create OncoCast run"){
       my_list = list(
-        menuItem("Abstract", tabName = "intro", icon = icon("atlas")),
-        menuItem("OncoCast Run", tabName = "run", icon = icon("gears")),
-        menuItem("Dashboard", tabName = "fixed", icon = icon("bar-chart")),
-        menuItem("Risk Group Stratification", tabName = "strat", icon = icon("scissors")),
-        menuItem("Gene View", tabName = "gene", icon = icon("chart-bar")),
-        menuItem("Validation", tabName = "valid", icon = icon("check-circle")),
-        menuItem("Patient View", tabName = "patient", icon = icon("user-circle-o")),
-        menuItem("Download Summary", tabName = "DL",icon = icon("download"))
+        shinydashboard::menuItem("Abstract", tabName = "intro", icon = icon("atlas")),
+        shinydashboard::menuItem("OncoCast Run", tabName = "run", icon = icon("gears")),
+        shinydashboard::menuItem("Dashboard", tabName = "fixed", icon = icon("bar-chart")),
+        shinydashboard::menuItem("Risk Group Stratification", tabName = "strat", icon = icon("scissors")),
+        shinydashboard::menuItem("Gene View", tabName = "gene", icon = icon("chart-bar")),
+        shinydashboard::menuItem("Validation", tabName = "valid", icon = icon("check-circle")),
+        shinydashboard::menuItem("Patient View", tabName = "patient", icon = icon("user-circle-o")),
+        shinydashboard::menuItem("Download Summary", tabName = "DL",icon = icon("download"))
       )
     }
-    sidebarMenu(my_list)
+    shinydashboard::sidebarMenu(my_list)
 
   })
 
@@ -411,15 +443,15 @@ server <- function(input, output) {
   # results
 
   output$RiskHistogram <- renderPlot({results()$RiskHistogram})
-  output$RiskSummary <- renderTable({results()$RiskScoreSummary})
-  output$CPE <- renderTable({results()$CPE})
+  output$RiskSummary <- renderTable({results()$RiskScoreSummary},rownames = TRUE)
+  output$CPE <- renderTable({results()$CPE},rownames = TRUE)
   output$RefitRisk <- renderTable({
     temp <- summary(results()$RiskRefit)$coefficients
     colnames(temp) <- c("Coefficient","Hazard Ratio","S.E.","Z-value","P-value")
     temp[1,] <- round(temp[1,],digits=4)
     if(temp[,5] < 0.00001) temp[,5] <- "<0.00001"
     return(temp)
-  })
+  },rownames = TRUE)
 
 
   #### TAB3 ####
@@ -459,7 +491,7 @@ server <- function(input, output) {
 
   v.results <- reactive({
 
-    validate.app(OC_object = OC_object(),
+    validate_app(OC_object = OC_object(),
                  LassoFits=gene.plot()$Fits,
                  ori.risk=results()$risk.raw,
                  qts=strat()$rawCuts,
@@ -478,7 +510,7 @@ server <- function(input, output) {
 
   ind.results <- reactive({
 
-    predIncomingSurv.app(OC_object = OC_object(),
+    predIncomingSurv_app(OC_object = OC_object(),
                          new.data=in.dat.pred(),
                          surv.print= 1:min(10,nrow(in.dat.pred)),
                          riskRefit=results()$RiskRefit)
@@ -499,8 +531,8 @@ server <- function(input, output) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
       # can happen when deployed).
-      tempReport <- file.path("./R", "HTML_report.Rmd") #tempdir()
-      file.copy("HTML_report.Rmd", tempReport, overwrite = TRUE)
+      tempReport <- file.path("./", "HTML_report.Rmd") #tempdir()
+      file.copy("HTML_report.Rmd", tempReport, overwrite = FALSE)
 
       # possible validation parameters #
       if(is.character(try(v.results()$RiskHistogram.new,silent = T))){
@@ -564,7 +596,7 @@ server <- function(input, output) {
       "appTest_data.csv"
     },
     content = function(file) {
-      data <- read.csv("../data/appTest_data.csv",row.names = 1)
+      data <- read.csv("../inst/extdata/appTest_data.csv",row.names = 1)
       write.csv(data, file)
     }
   )
@@ -573,7 +605,7 @@ server <- function(input, output) {
       "appTest_valdata.csv"
     },
     content = function(file) {
-      data <- read.csv("../data/appTest_valdata.csv",row.names = 1)
+      data <- read.csv("../inst/extdata/appTest_valdata.csv",row.names = 1)
       write.csv(data, file)
     }
   )
