@@ -11,7 +11,8 @@
 launchApp <- function(){
 
   runApp(
-    appDir = paste0("R")
+    appDir = find.package("OncoCast")
+    # appDir = paste0("R")
   )
 }
 
