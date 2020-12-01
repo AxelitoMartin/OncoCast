@@ -28,14 +28,14 @@ instead of 3.3. There is no need to update it for the package to work
 properly.
 
 ``` r
-install.packages("devtools")
-devtools::install_github("AxelitoMartin/OncoCast")
+install.packages("remotes")
+remotes::install_github("AxelitoMartin/OncoCast")
 ```
 
 If you wish to use the development version of the package please use:
 
 ``` r
-devtools::install_github("AxelitoMartin/OncoCast", ref = "development")
+remotes::install_github("AxelitoMartin/OncoCast", ref = "development")
 ```
 
 ## Using `OncoCast`

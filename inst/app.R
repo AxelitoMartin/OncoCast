@@ -4,7 +4,6 @@
 #' OncoCast.
 #' @return Web-based application
 #' @keywords application
-#' @export
 #' @examples library(OncoCast)
 #' @import
 #' shiny
@@ -280,7 +279,6 @@ ui <- shinydashboard::dashboardPage(
 #' @param output output for server
 #' @return Web-based application
 #' @keywords application
-#' @export
 #' @examples library(OncoCast)
 #' @import
 #' shiny
@@ -382,6 +380,7 @@ server <- function(input, output) {
                            nonPenCol = NULL,nTree=as.numeric(input$nTree),rf_gbm.save = T,
                            epsilon.svm = seq(0,0.2,0.1), cost.svm = 2^(2:4))
       OC_object <- out[[1]]
+      file.remove(list.files()[grep("*\\.txt",list.files())])
       # if(!is.null(out[[2]])) dat() <- out[[2]] #reactive({out[[2]]})
       out <- NULL
     }
@@ -531,7 +530,7 @@ server <- function(input, output) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
       # can happen when deployed).
-      tempReport <- file.path("./", "HTML_report.Rmd") #tempdir()
+      tempReport <- file.path(paste0(find.package("OncoCast"),"/HTML_report.Rmd")) #tempdir()
       file.copy("HTML_report.Rmd", tempReport, overwrite = FALSE)
 
       # possible validation parameters #
@@ -596,7 +595,7 @@ server <- function(input, output) {
       "appTest_data.csv"
     },
     content = function(file) {
-      data <- read.csv("../inst/extdata/appTest_data.csv",row.names = 1)
+      data <- read.csv(paste0(find.package("OncoCast"),"/extdata/appTest_data.csv"),row.names = 1)
       write.csv(data, file)
     }
   )
@@ -605,7 +604,7 @@ server <- function(input, output) {
       "appTest_valdata.csv"
     },
     content = function(file) {
-      data <- read.csv("../inst/extdata/appTest_valdata.csv",row.names = 1)
+      data <- read.csv(paste0(find.package("OncoCast"),"/extdata/appTest_valdata.csv"),row.names = 1)
       write.csv(data, file)
     }
   )
