@@ -531,8 +531,8 @@ server <- function(input, output) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
       # can happen when deployed).
-      tempReport <- file.path("./", "HTML_report.Rmd") #tempdir()
-      file.copy("HTML_report.Rmd", tempReport, overwrite = FALSE)
+      tempReport <- file.path("../inst/", "HTML_report.Rmd") #tempdir()
+      file.copy("HTML_report.Rmd", tempReport, overwrite = TRUE)
 
       # possible validation parameters #
       if(is.character(try(v.results()$RiskHistogram.new,silent = T))){
