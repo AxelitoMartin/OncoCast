@@ -96,10 +96,10 @@
 <a href="#installing-oncocast" class="anchor"></a>Installing <code>OncoCast</code>
 </h2>
 <p><code>OncoCast</code> has some dependencies that will be installed if they are not found in your library. When installing from github a prompt in the console may ask if you want to install the binaries for curl v4.0 instead of 3.3. There is no need to update it for the package to work properly.</p>
-<div class="sourceCode" id="cb1"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"devtools"</span>)
-<span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"AxelitoMartin/OncoCast"</span>)</pre></div>
+<div class="sourceCode" id="cb1"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"remotes"</span>)
+<span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span>(<span class="st">"AxelitoMartin/OncoCast"</span>)</pre></div>
 <p>If you wish to use the development version of the package please use:</p>
-<div class="sourceCode" id="cb2"><pre class="r"><span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"AxelitoMartin/OncoCast"</span>, <span class="kw">ref</span> <span class="kw">=</span> <span class="st">"development"</span>)</pre></div>
+<div class="sourceCode" id="cb2"><pre class="r"><span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span>(<span class="st">"AxelitoMartin/OncoCast"</span>, <span class="kw">ref</span> <span class="kw">=</span> <span class="st">"development"</span>)</pre></div>
 </div>
 <div id="using-oncocast" class="section level2">
 <h2 class="hasAnchor">

@@ -35,13 +35,13 @@ OncoCast enables users to easily perform one or multiple machine learning surviv
 `OncoCast` has some dependencies that will be installed if they are not found in your library. When installing from github a prompt in the console may ask if you want to install the binaries for curl v4.0 instead of 3.3. There is no need to update it for the package to work properly.
 
 ``` r
-install.packages("devtools")
-devtools::install_github("AxelitoMartin/OncoCast")
+install.packages("remotes")
+remotes::install_github("AxelitoMartin/OncoCast")
 ```
 If you wish to use the development version of the package please use:
 
 ``` r
-devtools::install_github("AxelitoMartin/OncoCast", ref = "development")
+remotes::install_github("AxelitoMartin/OncoCast", ref = "development")
 ```
 
 ## Using `OncoCast` 
