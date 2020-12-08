@@ -47,4 +47,5 @@ Depends:
     NeuralNetTools,
     e1071,
     CPE,
-    penalized
+    penalized,
+    R.utils
